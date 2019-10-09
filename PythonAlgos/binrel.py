@@ -1,6 +1,3 @@
-from itertools import permutations
-
-
 def symmetry_test(pair_list):
     return all(
         map(
