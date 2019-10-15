@@ -13,16 +13,15 @@ def find(f, df, ddf, x0, x1, eps):
     ):
         return
 
-    mval = dfx0 if dfx0 < dfx1 else dfx1
     currx = x0 if fx0 * ddfx0 > 0 else x1
     print(f"X={currx}; F(X)={f(currx)}; DF(X)={df(currx)}")
 
     while True:
-        if abs(f(currx)) / mval <= eps:
-            break
-
-        fcurrx = f(currx)
-        dfcurrx = df(currx)
-        currx = currx - fcurrx / dfcurrx
+        prevx = currx
+        currx = prevx - f(prevx) / df(prevx)
 
         print(f"X={currx}; F(X)={f(currx)}; DF(X)={df(currx)}")
+        if abs(currx - prevx) < eps:
+            print(
+                f"X={currx - f(currx) / df(currx)}; F(X)={f(currx - f(currx) / df(currx))}; DF(X)={df(currx - f(currx) / df(currx))}")
+            break
