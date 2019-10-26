@@ -22,7 +22,7 @@ def find(f, df, ddf, a, b, eps):
         currx = prevx - f(prevx)**2 / (f(prevx + f(prevx)) - f(prevx))
 
         print(f"X={currx}; F(X)={f(currx)}")
-        if abs(currx - prevx) < eps:
+        if abs(currx - prevx) < 2 * eps:
             if shouldStop:
                 break
 
