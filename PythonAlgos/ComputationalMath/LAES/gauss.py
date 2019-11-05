@@ -42,4 +42,9 @@ class GaussMatrix:
 
 gm = GaussMatrix()
 gm.trianglize()
-gm.solve()
+
+try:
+  gm.solve()
+
+except ZeroDivisionError:
+  print("No solutions")
