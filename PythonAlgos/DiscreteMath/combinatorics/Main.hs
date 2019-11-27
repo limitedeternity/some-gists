@@ -1,12 +1,13 @@
 import Factorial
-import Power
 
 a :: Int -> Int -> Double
 a k n = (fromInteger $ factorial n) / (fromInteger $ factorial (n - k))
 
-a_ k n = power n k
+a_ :: Int -> Int -> Double
+a_ k n = (fromIntegral $ n) ** (fromIntegral $ k)
 
-p n = factorial n
+p :: Int -> Double
+p n = fromInteger $ factorial n
 
 p_ :: Int -> [Int] -> Double
 p_ n lst = (fromInteger $ factorial n) / (foldl (*) 1 (map (fromInteger . factorial) lst)) 
