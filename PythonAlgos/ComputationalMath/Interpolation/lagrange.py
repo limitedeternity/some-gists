@@ -18,8 +18,12 @@ for i, n in enumerate(numerator_combinations):
         f"{y[i] / denominator} * {' * '.join(map(lambda t: f'(x - {x[t]})', n))}" 
     )
 
-print("\n\n+\n\n".join(poly), '\n\n')
 
 expr = sympify(" + ".join(poly), evaluate=False)
-print(simplify(expr))
+f = eval("lambda x: " + str(simplify(expr)))
+
+
+if __name__ == "__main__":
+    print("\n\n+\n\n".join(poly), '\n\n')
+    print(simplify(expr))
 
