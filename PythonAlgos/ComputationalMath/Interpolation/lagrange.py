@@ -1,29 +1,35 @@
-import math
+from functools import reduce
 from itertools import combinations
+import math
+from operator import mul
 
 from sympy import sympify, simplify
 
 
-x = [1.375, 1.38, 1.385, 1.39, 1.395, 1.4]
-y = [5.04192, 5.17744, 5.32016, 5.47069, 5.62968, 5.79788]
+x = [1, 2, 3, 4]
+y = [4, 10, 18, 28]
 assert len(x) == len(y)
 assert len(x) > 1
 
+r = range(len(y))
+c = [y[i] / reduce(mul, [x[i] - x[j] for j in r if j != i]) for i in r]
+
 poly = []
-numerator_combinations = list(combinations(range(len(x)), len(x) - 1))[::-1]
+c_muls = list(combinations(range(len(x)), len(x) - 1))[::-1]
+for i in range(len(c)):
+    p = [str(c[i])]
+    for m in c_muls[i]:
+        p.append(f"(x - {x[m]})")
 
-for i, n in enumerate(numerator_combinations):
-    denominator = eval(' * '.join(map(lambda t: f'({x[i] - x[t]})', n)))
-    poly.append(
-        f"{y[i] / denominator} * {' * '.join(map(lambda t: f'(x - {x[t]})', n))}" 
-    )
+    poly.append(" * ".join(p))
 
 
-expr = sympify(" + ".join(poly), evaluate=False)
-f = eval("lambda x: " + str(simplify(expr)))
+expr = " + ".join(poly)
+f = eval("lambda x: " + expr)
 
 
 if __name__ == "__main__":
-    print("\n\n+\n\n".join(poly), '\n\n')
-    print(simplify(expr))
+    print(expr)
+    print()
+    print(sympify(simplify(expr)))
 

@@ -15,11 +15,11 @@ for i in range(1, len(x)):
 
 poly = []
 for i in range(len(c)):
-    poly_c_mul = []
+    p = [str(c[i])]
     for j in range(i):
-        poly_c_mul.append(f"(x - {x[j]})")
+        p.append(f"(x - {x[j]})")
 
-    poly.append(str(c[i]) + " * " + (" * ".join(poly_c_mul)) if len(poly_c_mul) > 0 else str(c[i]))
+    poly.append(" * ".join(p))
 
 
 expr = " + ".join(poly)
