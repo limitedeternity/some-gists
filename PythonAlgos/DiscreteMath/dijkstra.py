@@ -77,7 +77,7 @@ def dijkstra(matrix, source, dest):
         path.insert(0, curr_vertex)
 
     print(f"Итог: {' -> '.join(str(x) for x in path)}")
-    print(f"Длина пути: {len(path)}")
+    print(f"Длина: {sum(map(lambda line: next(filter(lambda link: link['target'] == line[1], GRAPH[line[0]]))['weight'], zip(path[:-1], path[1:])))}")
     return path
 
 
