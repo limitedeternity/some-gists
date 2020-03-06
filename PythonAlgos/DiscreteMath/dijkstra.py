@@ -77,6 +77,7 @@ def dijkstra(matrix, source, dest):
         path.insert(0, curr_vertex)
 
     print(f"Итог: {' -> '.join(str(x) for x in path)}")
+    print(f"Длина пути: {len(path)}")
     return path
 
 
