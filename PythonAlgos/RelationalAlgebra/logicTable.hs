@@ -71,7 +71,7 @@ cartSelfProd l n = mapM (\_ -> l) [1..n]
 
 buildTable :: (CallWithList f Bool, Num a, Enum a) => a -> f -> [([Bool], Bool)]
 buildTable argsAmount fn =
-    (\c -> zip c $ map (t $ fn) c) (cartSelfProd [False, True] argsAmount)
+    (\c -> zip c $ map (t fn) c) (cartSelfProd [False, True] argsAmount)
 
 
 main :: IO ()
