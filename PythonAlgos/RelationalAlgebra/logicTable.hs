@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-import Data.List
+import Data.List (intercalate)
 
 -- Приоритет | Операция | Определение | Обозначение |
 -- ------------------------------------------------- 
