@@ -6,7 +6,7 @@ import System.Process(readProcess)
 
 (|>) :: a -> (a -> b) -> b
 (|>) x f = f x
-infixl 1 |>
+infixl 0 |>
 
 
 data Expr = Var String | Apply Expr Expr | Lambda String Expr -- lambda calculus expression
