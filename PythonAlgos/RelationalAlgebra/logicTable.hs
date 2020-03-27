@@ -1,8 +1,10 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-import Data.List (intercalate)
+import Data.List (intercalate, elemIndex)
+import Data.Maybe (fromJust)
 
 -- Приоритет | Операция | Определение | Обозначение |
 -- ------------------------------------------------- 
@@ -53,33 +55,60 @@ infixl 5 |*|
 (|>) x f = f x
 infixl 0 |>
 
+
 class CallWithList f res where
-    t :: f -> [res] -> res
+    callwithlist :: f -> [res] -> res
 
 instance CallWithList res res where
-    t res [] = res
-    t _ _ = error "слишком много аргументов"
+    callwithlist res [] = res
+    callwithlist _ _ = error "слишком много аргументов"
 
 instance CallWithList f res => CallWithList (res -> f) res where
-    t f (x:xs) = t (f x) xs
-    t _ [] = error "недостаточно аргументов"
+    callwithlist f (x:xs) = callwithlist (f x) xs
+    callwithlist _ [] = error "недостаточно аргументов"
+
+
+class Arity f where
+    arity :: f -> Int
+
+instance Arity x where
+    arity _ = 0
+
+instance Arity f => Arity ((->) a f) where
+    arity f = 1 + arity (f undefined)
 
 
 cartSelfProd :: (Monad m, Num a, Enum a) => m b -> a -> m [b]
 cartSelfProd l n = mapM (\_ -> l) [1..n]
 
 
+buildFnFromVec4 :: [Bool] -> (Bool -> Bool -> Bool)
+buildFnFromVec4 lst
+    | (length lst == 4) =
+        \x -> \y -> (!!) lst $ fromJust $ elemIndex [x, y] $ cartSelfProd [False, True] 2
+    | otherwise = error "вектор некорректной длины"
+
+buildFnFromVec8 :: [Bool] -> (Bool -> Bool -> Bool -> Bool)
+buildFnFromVec8 lst
+    | (length lst == 8) =
+        \x -> \y -> \z -> (!!) lst $ fromJust $ elemIndex [x, y, z] $ cartSelfProd [False, True] 3
+    | otherwise = error "вектор некорректной длины"
+
+
 buildTable :: (CallWithList f Bool, Num a, Enum a) => a -> f -> [([Bool], Bool)]
 buildTable argsAmount fn =
-    (\c -> zip c $ map (t fn) c) (cartSelfProd [False, True] argsAmount)
+    (\c -> zip c $ map (callwithlist fn) c) (cartSelfProd [False, True] argsAmount)
 
 
 main :: IO ()
 main =
-    buildTable 3 fn
+    buildTable (arity fn) fn
     |> map show
     |> intercalate "\n"
     |> putStrLn
     where
-        fn = \x -> \y -> \z -> (x |*| y ~> z) |+| x |^| y
+        fn x1 x2 x3 = f (g x1 x2) x1 |*| g x1 x3
+            where
+                f = buildFnFromVec4 [False, True, True, True]
+                g = buildFnFromVec4 [True, True, False, True]
 
