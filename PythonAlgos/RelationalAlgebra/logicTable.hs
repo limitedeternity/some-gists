@@ -1,9 +1,8 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-import Data.List (intercalate, elemIndex)
+import Data.List (intercalate, elemIndex, nub)
 import Data.Maybe (fromJust)
 
 -- Приоритет | Операция | Определение | Обозначение |
@@ -50,11 +49,6 @@ infixl 4 |+|
 (|*|) = (&&)
 infixl 5 |*|
 
--- Forward pipe operator
-(|>) :: a -> (a -> b) -> b
-(|>) x f = f x
-infixl 0 |>
-
 
 class CallWithList f res where
     callwithlist :: f -> [res] -> res
@@ -74,7 +68,7 @@ class Arity f where
 instance Arity x where
     arity _ = 0
 
-instance Arity f => Arity ((->) a f) where
+instance {-# OVERLAPPING #-} Arity f => Arity ((->) a f) where
     arity f = 1 + arity (f undefined)
 
 
@@ -95,20 +89,68 @@ buildFnFromVec8 lst
     | otherwise = error "вектор некорректной длины"
 
 
-buildTable :: (CallWithList f Bool, Num a, Enum a) => a -> f -> [([Bool], Bool)]
-buildTable argsAmount fn =
-    (\c -> zip c $ map (callwithlist fn) c) (cartSelfProd [False, True] argsAmount)
+buildTable :: (CallWithList f Bool, Arity f) => f -> [([Bool], Bool)]
+buildTable fn =
+    (\c -> zip c $ map (callwithlist fn) c) (cartSelfProd [False, True] $ arity fn)
+
+
+checkFictivity :: [([Bool], Bool)] -> [Bool]
+checkFictivity table
+    | (length table == 4) =
+        map isFictive 
+            [
+                [(i, i+2) | i <- [0, 1]], -- x
+                [(i, i+1) | i <- [0, 2]]  -- y
+            ]
+    | (length table == 8) =
+        map isFictive
+            [
+                [(i, i+4) | i <- [0, 1, 2, 3]], -- x
+                [(i, i+2) | i <- [0, 1, 4, 5]], -- y
+                [(i, i+1) | i <- [0, 2, 4, 6]]  -- z
+            ]
+    | otherwise = error "таблица неподдерживаемой ширины"
+        where
+            isFictive = all (\pair -> (==) (snd $ (!!) table (fst pair)) (snd $ (!!) table (snd pair)))
+
+
+minifyTable :: [([Bool], Bool)] -> [Bool] -> [([Bool], Bool)]
+minifyTable table fictivityVector
+    | (2^(length fictivityVector) == length table) = nub $ filterOutFictiveVars $ getIndexesOfTrue fictivityVector
+    | otherwise = error "некорректные данные"
+        where
+            getIndexesOfTrue :: (Num b, Enum b) => [Bool] -> [b]
+            getIndexesOfTrue lst = map (snd) $ filter (fst) $ (flip zip) [0..] lst
+
+            filterOutFictiveVars :: (Num b, Enum b, Eq b) => [b] -> [([Bool], Bool)]
+            filterOutFictiveVars fictiveVarIndexes = (flip map) table (
+                \pair -> 
+                    (flip (,)) (snd pair) (
+                        map (fst) $ (flip filter) (zip (fst pair) [0..]) (
+                            \enumeratedVarState ->
+                                not $ elem (snd enumeratedVarState) fictiveVarIndexes 
+                        )
+                    )
+                )
 
 
 main :: IO ()
-main =
-    buildTable (arity fn) fn
-    |> map show
-    |> intercalate "\n"
-    |> putStrLn
+main = do
+    let table = buildTable fn
+    putStrLn "Таблица истинности:"
+    putStrLn $ intercalate "\n" $ map show $ table
+    putStrLn ""
+
+    let fictivityVector = checkFictivity table
+    putStrLn "Фиктивность аргументов:"
+    putStrLn $ intercalate " " $ map show $ fictivityVector
+    putStrLn ""
+
+    let minTable = minifyTable table fictivityVector
+    putStrLn "Минифицированная таблица:"
+    putStrLn $ intercalate "\n" $ map show $ minTable
+    putStrLn ""
+
     where
-        fn x1 x2 x3 = f (g x1 x2) x1 |*| g x1 x3
-            where
-                f = buildFnFromVec4 [False, True, True, True]
-                g = buildFnFromVec4 [True, True, False, True]
+        fn = buildFnFromVec8 [False, False, True, True, True, True, False, False]
 
