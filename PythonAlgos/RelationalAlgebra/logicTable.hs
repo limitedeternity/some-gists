@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
+module LogicTable where
 import Data.List (intercalate, elemIndex, nub)
 import Data.Maybe (fromJust)
 
@@ -152,5 +153,6 @@ main = do
     putStrLn ""
 
     where
+        -- Функцию заносить сюда:
         fn = buildFnFromVec8 [False, False, True, True, True, True, False, False]
 
