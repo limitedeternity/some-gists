@@ -1,6 +1,7 @@
 from copy import copy
 from re import sub
 
+# A = {(001),(110)}
 a = input("A = ").strip()
 a = sub(r"(\d)", r"\1,", a)
 a = a.replace("{", "[").replace("}", "]")
