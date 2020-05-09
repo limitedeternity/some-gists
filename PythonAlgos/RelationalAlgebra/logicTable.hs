@@ -77,6 +77,9 @@ cartSelfProd :: (Monad m, Num a, Enum a) => m b -> a -> m [b]
 cartSelfProd l n = mapM (\_ -> l) [1..n]
 
 
+numToBool :: (Eq a, Num a) => a -> Bool
+numToBool = (==1)
+
 buildFnFromVec4 :: [Bool] -> (Bool -> Bool -> Bool)
 buildFnFromVec4 lst
     | (length lst == 4) =

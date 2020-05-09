@@ -30,7 +30,7 @@ main = do
     putStrLn ""
 
     putStrLn "СДНФ:"
-    putStrLn $ intercalate " |+| " $ map (intercalate " |*| ") $ (flip map) (map (zip [0..]) $ map (fst) $ filter (snd) $ table) $ map $ \p -> 
+    putStrLn $ (\s -> "(" ++ s ++ ")") $ intercalate ") |+| (" $ map (intercalate " |*| ") $ (flip map) (map (zip [0..]) $ map (fst) $ filter (snd) $ table) $ map $ \p -> 
         if | (snd p == True) -> (!!) (varNames) (fst p) 
            | otherwise -> (++) "!" $ (!!) (varNames) (fst p)
     putStrLn ""
