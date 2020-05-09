@@ -13,7 +13,7 @@ zhegalkinReduce table = [snd x | x <- (zip [0..] table), (fst x) `elem` (map (fs
                             | otherwise = vec:[]
             where
                 xorDescend v = (map (uncurry (|^|)) $ zip v $ tail v) & \row -> 
-                    if | (>) (length row) 0 -> row:[r | r <- (xorDescend row)]
+                    if | (>) (length row) 0 -> row:(xorDescend row)
                        | otherwise -> []
 
 
@@ -27,6 +27,18 @@ main = do
     let zhegalkinTable = zhegalkinReduce table
     putStrLn "Полином Жегалкина:"
     putStrLn $ intercalate " |^| " $ map (intercalate " |*| ") $ map (map (\p -> (!!) (varNames) (fst p))) $ map (filter (snd)) $ map (zip [0..]) $ map (fst) $ zhegalkinTable
+    putStrLn ""
+
+    putStrLn "СДНФ:"
+    putStrLn $ intercalate " |+| " $ map (intercalate " |*| ") $ (flip map) (map (zip [0..]) $ map (fst) $ filter (snd) $ table) $ map $ \p -> 
+        if | (snd p == True) -> (!!) (varNames) (fst p) 
+           | otherwise -> (++) "!" $ (!!) (varNames) (fst p)
+    putStrLn ""
+    
+    putStrLn "СКНФ:"
+    putStrLn $ (\s -> "(" ++ s ++ ")") $ intercalate ") |*| (" $ map (intercalate " |+| ") $ (flip map) (map (zip [0..]) $ map (fst) $ filter (not . snd) $ table) $ map $ \p -> 
+        if | (snd p == False) -> (!!) (varNames) (fst p) 
+           | otherwise -> (++) "!" $ (!!) (varNames) (fst p)
     putStrLn ""
 
     where
