@@ -2,44 +2,39 @@ package com.limitedeternity;
 
 import java.util.Arrays;
 
-class BaseTableEntry {
-    public boolean isEmpty() {
-        return true;
-    }
-
-    public boolean isDeleted() {
-        return false;
-    }
-
-    public void delete() { }
-    public Object getValue() { return null; }
+enum EntryStates {
+    EMPTY,
+    DELETED,
+    HAS_DATA
 }
 
-class TableEntry<V> extends BaseTableEntry {
+class TableEntry<V> {
     private V value;
-    private boolean deleted = false;
+    private EntryStates state;
 
     public TableEntry(V val) {
         value = val;
+        state = EntryStates.HAS_DATA;
     }
 
-    @Override
-    public boolean isEmpty() {
-        return false;
-    }
-
-    @Override
-    public boolean isDeleted() {
-        return deleted;
-    }
-
-    @Override
-    public void delete() {
-        deleted = true;
+    public TableEntry() {
         value = null;
+        state = EntryStates.EMPTY;
     }
 
-    @Override
+    public boolean isEmpty() {
+        return state.equals(EntryStates.EMPTY);
+    }
+
+    public boolean isDeleted() {
+        return state.equals(EntryStates.DELETED);
+    }
+
+    public void delete() {
+        value = null;
+        state = EntryStates.DELETED;
+    }
+
     public V getValue() {
         return value;
     }
@@ -48,22 +43,22 @@ class TableEntry<V> extends BaseTableEntry {
 public class HashTable<V> {
     private int size = 0;
     private int capacity = 5;
-    private BaseTableEntry[] table = new BaseTableEntry[capacity];
+    private TableEntry<?>[] table = new TableEntry[capacity];
 
     public HashTable() {
-        Arrays.fill(table, new BaseTableEntry());
+        Arrays.fill(table, new TableEntry<V>());
     }
 
     @SuppressWarnings("unchecked")
     private void checkLoadFactor() {
         if (((double) size) / ((double) capacity) > 0.75) {
-            BaseTableEntry[] tableCopy = Arrays.copyOf(table, capacity);
+            TableEntry<?>[] tableCopy = Arrays.copyOf(table, capacity);
 
             capacity *= 2;
-            table = new BaseTableEntry[capacity];
-            Arrays.fill(table, new BaseTableEntry());
+            table = new TableEntry[capacity];
+            Arrays.fill(table, new TableEntry<V>());
 
-            for (BaseTableEntry item : tableCopy) {
+            for (TableEntry<?> item : tableCopy) {
                 if (!item.isEmpty() && !item.isDeleted()) {
                     V value = (V) item.getValue();
                     TableEntry<V> entry = new TableEntry<>(value);
@@ -81,7 +76,7 @@ public class HashTable<V> {
 
     private int hashFunction(V value) {
         if (value.getClass().isAssignableFrom(Integer.class)) {
-            return (int) value % 101 % capacity;
+            return (Integer) value % 101 % capacity;
         } else {
             return value.hashCode() % capacity;
         }
@@ -132,7 +127,7 @@ public class HashTable<V> {
     public String toString() {
         StringBuilder tableStringBuilder = new StringBuilder();
         int i = 0;
-        for (BaseTableEntry item : table) {
+        for (TableEntry<?> item : table) {
             if (item.isEmpty()) {
                 tableStringBuilder.append(i).append(":= []");
             } else if (item.isDeleted()) {
