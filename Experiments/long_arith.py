@@ -77,14 +77,13 @@ def divide(a, b, signs):
 
     while cmp(a, b) >= 0:
         if negative:
-            a = add_with_carry(a, b, signs)[1]
             counter = subtract_with_carry(counter, [1], [1, 0])[1]
         else:
-            a = subtract_with_carry(a, b, signs)[1]
             counter = add_with_carry(counter, [1], [0, 0])[1]
 
-    return (negative, counter)
+        a = subtract_with_carry(a, b, [0, 0])[1]
 
+    return (negative, counter)
 
 def multiply(a, b, signs):
     negative = signs == [0, 1] or signs == [1, 0]
