@@ -32,10 +32,13 @@ def add_with_carry(a, b, signs):
     result = []
     carry = 0
     for i in range(max_len - 1, -1, -1):
-        fst = a[i]
-        snd = b[i]
-        (carry, mod) = divmod(fst + snd + carry, 10)
-        result.append(mod)
+        tmp = a[i] + b[i] + carry
+        if tmp >= 10:
+            result.append(tmp - 10)
+            carry = 1
+        else:
+            result.append(tmp)
+            carry = 0
 
     if carry != 0:
         result.append(carry)
@@ -57,11 +60,12 @@ def subtract_with_carry(a, b, signs):
     result = []
     for i in range(max_len - 1, -1, -1):
         [fst, snd] = [b[i], a[i]] if cmp(a, b) < 0 else [a[i], b[i]]
-        if fst - snd - carry < 0:
-            result.append(10 + fst - snd - carry)
+        tmp = fst - snd - carry
+        if tmp < 0:
+            result.append(10 + tmp)
             carry = 1
         else:
-            result.append(fst - snd - carry)
+            result.append(tmp)
             carry = 0
 
     return (cmp(a, b) > 0 and signs == [1, 1] or cmp(a, b) < 0 and signs == [0, 0], result[::-1])
