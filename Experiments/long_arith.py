@@ -101,6 +101,15 @@ def multiply(a, b, signs):
 
     return (negative, result)
 
+def isqrt(a):
+    x = a
+    y = divide(add_with_carry(x, [1], [0, 0])[1], [2], [0, 0])[1]
+    while cmp(x, y) > 0:
+        x = y
+        y = divide(add_with_carry(x, divide(a, x, [0, 0])[1], [0, 0])[1], [2], [0, 0])[1]
+
+    return x
+
 
 if __name__ == "__main__":
 # -------- Addition
@@ -145,3 +154,9 @@ if __name__ == "__main__":
             mul_repr = list(map(int, str(abs(i * j))))
             assert multiply(i_repr, j_repr, [neg_i, neg_j]) == (neg_mul, mul_repr)
 
+# ------- Square root
+    assert isqrt([0]) == [0]
+    assert isqrt([1]) == [1]
+    assert isqrt([2]) == [1]
+    assert isqrt([1,0,2,3]) == [3,1]
+    assert isqrt([1,0,2,4]) == [3,2]
