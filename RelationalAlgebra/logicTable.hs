@@ -1,6 +1,13 @@
+{-
+   Программа для построения и минификации таблицы истинности функций от двух или трёх переменных
+   Автор: Беспалов В. (3 курс, ИС)
+   Окружение, использованное при разработке: GHC (8.10.x)
+-}
+
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverlappingInstances #-}
 
 module LogicTable where
 import Data.List (intercalate, elemIndex, nub)
@@ -69,7 +76,7 @@ class Arity f where
 instance Arity x where
     arity _ = 0
 
-instance {-# OVERLAPPING #-} Arity f => Arity ((->) a f) where
+instance Arity f => Arity ((->) a f) where
     arity f = 1 + arity (f undefined)
 
 
@@ -124,16 +131,14 @@ minifyTable table fictivityVector
     | otherwise = error "некорректные данные"
         where
             getIndexesOfTrue :: (Num b, Enum b) => [Bool] -> [b]
-            getIndexesOfTrue lst = map (snd) $ filter (fst) $ (flip zip) [0..] lst
+            getIndexesOfTrue lst = map snd $ filter fst $ flip zip [0..] lst
 
             filterOutFictiveVars :: (Num b, Enum b, Eq b) => [b] -> [([Bool], Bool)]
-            filterOutFictiveVars fictiveVarIndexes = (flip map) table (
+            filterOutFictiveVars fictiveVarIndexes = flip map table (
                 \pair -> 
-                    (flip (,)) (snd pair) (
-                        map (fst) $ (flip filter) (zip (fst pair) [0..]) (
-                            \enumeratedVarState ->
-                                not $ elem (snd enumeratedVarState) fictiveVarIndexes 
-                        )
+                    flip (,) (snd pair) (
+                        map fst $ flip filter (zip (fst pair) [0..]) $ \enumeratedVarState ->
+                            not $ elem (snd enumeratedVarState) fictiveVarIndexes 
                     )
                 )
 
@@ -156,6 +161,20 @@ main = do
     putStrLn ""
 
     where
-        -- Функцию заносить сюда:
-        fn = buildFnFromVec8 [False, False, True, True, True, True, False, False]
+        {-
+            Примеры использования:
+            1) Лямбда-выражение:
+                fn = \x -> \y -> \z -> not (x |+| y) ~> not (z |*| y)
+            2) Функции:
+                fn x y z = not (x |+| y) ~> not (z |*| y)
+            3) Результирующий вектор (двух переменных)
+                fn = buildFnFromVec4 [False, True, True, False]
+            4) Результирующий вектор (трёх переменных)
+                fn = buildFnFromVec8 [False, False, True, True, True, True, False, False]
+
+            Затем, либо выполнить компиляцию и запустить, либо загрузить этот файл в GHCi и вызвать main.
+        -}
+
+        -- Функция (не менять имя):
+        fn = \x -> \y -> \z -> not (x |+| y) ~> not (z |*| y)
 
