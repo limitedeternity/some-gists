@@ -1,4 +1,3 @@
-from copy import copy
 from re import sub
 
 # A = {(001),(110)}
