@@ -8,11 +8,11 @@ import Data.List
 class Depth l where
     listDepth :: l -> Integer
 
-instance {-# OVERLAPPING #-} Depth l where
-    listDepth = const 0
-
-instance {-# INCOHERENT #-} Depth l => Depth [l] where
+instance {-# OVERLAPPING #-} Depth l => Depth [l] where
     listDepth = (+1) . foldr (\x y -> if x > y then x else y) 0 . map listDepth 
+
+instance Depth l where
+    listDepth = const 0
 
 
 -- Второй способ: запрос типа у компилятора
