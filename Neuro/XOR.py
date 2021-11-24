@@ -2,21 +2,30 @@ from neurolib import *
 
 
 class Layer1Neuron1(Neuron):
-    def __init__(self, T, *args, **kwargs):
-        super().__init__([1.5, -1.0, -1.0],
-                         lambda x: 1.0 if x >= T else 0.0, *args, **kwargs)
+    def __init__(self, T):
+        super().__init__(
+            weights=[1.5, -1.0, -1.0],
+            activator=lambda x: 1.0 if x >= T else 0.0,
+            receptor=lambda inputs: [1] + inputs
+        )
 
 
 class Layer1Neuron2(Neuron):
-    def __init__(self, T, *args, **kwargs):
-        super().__init__([0.5, -1.0, -1.0],
-                         lambda x: 1.0 if x >= T else 0.0, *args, **kwargs)
+    def __init__(self, T):
+        super().__init__(
+            weights=[0.5, -1.0, -1.0],
+            activator=lambda x: 1.0 if x >= T else 0.0,
+            receptor=lambda inputs: [1] + inputs
+        )
 
 
 class Layer2Neuron1(Neuron):
-    def __init__(self, T, *args, **kwargs):
-        super().__init__([-0.5, 1.0, -1.0],
-                         lambda x: 1.0 if x >= T else 0.0, *args, **kwargs)
+    def __init__(self, T):
+        super().__init__(
+            weights=[-0.5, 1.0, -1.0],
+            activator=lambda x: 1.0 if x >= T else 0.0,
+            receptor=lambda inputs: [1] + inputs
+        )
 
 
 # Maybe[NeuralNetwork]
@@ -26,26 +35,17 @@ def setup_network():
         Net = NeuralNetwork(
             [
                 NeuronSpec(
-                    neuron=Layer1Neuron1(
-                        T,
-                        receptor=lambda inputs: [1] + inputs
-                    ),
+                    neuron=Layer1Neuron1(T),
                     mode="input",
                     links=[2]
                 ),
                 NeuronSpec(
-                    neuron=Layer1Neuron2(
-                        T,
-                        receptor=lambda inputs: [1] + inputs
-                    ),
+                    neuron=Layer1Neuron2(T),
                     mode="input",
                     links=[2]
                 ),
                 NeuronSpec(
-                    neuron=Layer2Neuron1(
-                        T,
-                        receptor=lambda inputs: [1] + inputs
-                    ),
+                    neuron=Layer2Neuron1(T),
                     mode="output",
                     links=[]
                 ),

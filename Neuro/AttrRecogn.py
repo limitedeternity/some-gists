@@ -2,21 +2,27 @@ from neurolib import *
 
 
 class MammalNeuron(Neuron):
-    def __init__(self, *args, **kwargs):
-        super().__init__([4.0, 0.01, 0.01, -1.0, -1.5],
-                         lambda x: x, *args, **kwargs)
+    def __init__(self):
+        super().__init__(
+            weights=[4.0, 0.01, 0.01, -1.0, -1.5],
+            activator=lambda x: x
+        )
 
 
 class BirdNeuron(Neuron):
-    def __init__(self, *args, **kwargs):
-        super().__init__([2.0, -1.0, 2.0, 2.5, 2.0],
-                         lambda x: x, *args, **kwargs)
+    def __init__(self):
+        super().__init__(
+            weights=[2.0, -1.0, 2.0, 2.5, 2.0],
+            activator=lambda x: x
+        )
 
 
 class FishNeuron(Neuron):
-    def __init__(self, *args, **kwargs):
-        super().__init__([-1.0, 3.5, 0.01, -2.0, 1.5],
-                         lambda x: x, *args, **kwargs)
+    def __init__(self):
+        super().__init__(
+            weights=[-1.0, 3.5, 0.01, -2.0, 1.5],
+            activator=lambda x: x
+        )
 
 
 selector = WTASelection(
@@ -59,16 +65,3 @@ assert(
     ) == ("FishNeuron", 11.99)
 )
 
-# =======================================
-
-
-def signal_power(vec): return sum(x * x for x in vec)**0.5
-
-
-assert(
-    signal_power(MammalNeuron().weights) !=
-    signal_power([4.0, -1.0, -1.0, -0.9, -1.0])
-    and
-    signal_power(MammalNeuron().weights) !=
-    signal_power([8.0, -6.0, -3.0, -5.0, -9.0])
-)
