@@ -1,3 +1,4 @@
+from copy import copy, deepcopy
 from random import uniform
 
 
@@ -38,9 +39,11 @@ class Neuron:
 
 
 class NeuronSpec(object):
-    # Neuron -> str -> List[Num] -> NeuronSpec
+    # Neuron -> str -> Set[Num] -> NeuronSpec
     def __init__(self, neuron, mode, links):
         assert mode in {"input", "hidden", "output"}
+        assert isinstance(links, set)
+
         self.neuron = neuron
         self.mode = mode
         self.links = links
@@ -52,43 +55,36 @@ class NeuralNetwork:
 
         # 1. Each neuron can only send signals forward
         assert all(
-            link_index > cur_index for cur_index, spec in enumerate(neuron_specs)
+            link_index > cur_index and link_index < len(neuron_specs)
+            for cur_index, spec in enumerate(neuron_specs)
             for link_index in spec.links
         )
 
         # 2. Output-layer neurons can't transmit signals to other neurons within this network
-        assert all(
-            not spec.links for spec in neuron_specs if spec.mode == "output"
-        )
+        assert all(not spec.links for spec in neuron_specs if spec.mode == "output")
 
         # 3. Input-layer neurons can't receive signals from other neurons within this network
         assert all(
-            j not in [
-                i for i, spec0 in enumerate(neuron_specs)
-                if spec0.mode == "input"
-            ]
+            j
+            not in [i for i, spec0 in enumerate(neuron_specs) if spec0.mode == "input"]
             for spec1 in neuron_specs
             for j in spec1.links
         )
 
         self.neuron_specs = neuron_specs
-        self.is_single_layer = all(
-            spec.mode == "input" for spec in neuron_specs
-        )
-
+        self.is_single_layer = all(spec.mode == "input" for spec in neuron_specs)
         self.memory = [[] for _ in range(len(neuron_specs) + 1)]
 
     # List[List[Num]] -> NeuralNetwork
     def send_inputs(self, inputs):
         input_neuron_indices = [
-            i for i, spec in enumerate(self.neuron_specs)
-            if spec.mode == "input"
+            i for i, spec in enumerate(self.neuron_specs) if spec.mode == "input"
         ]
 
         assert len(inputs) == len(input_neuron_indices)
 
         for i, sigs in zip(input_neuron_indices, inputs):
-            self.memory[i] = sigs.copy()
+            self.memory[i] = copy(sigs)
 
         return self
 
@@ -105,34 +101,52 @@ class NeuralNetwork:
                 for linked_neuron_index in spec.links:
                     self.memory[linked_neuron_index].append(out_signal)
 
-        result = self.memory[-1].copy()
+        result = copy(self.memory[-1])
         self.memory[-1].clear()
         return result
 
 
 class WTASelection:
     """
-    Performs neuron selection within single-layer network.
-    Selects a neuron with strongest response, which has passed the threshold.
+    Selects a neuron chain which produced the strongest response, which has passed the threshold.
+    The chain can be used to construct a new network.
     """
 
     # NeuralNetwork -> Num -> WTASelection
-    def __init__(self, sl_net, threshold):
-        self.sl_net = sl_net
+    def __init__(self, network, threshold):
+        self.network = network
         self.threshold = threshold
 
-    # List[List[Num]] -> Tuple[str, Num]
+    # List[List[Num]] -> Tuple[List[NeuronSpec], Num]
     def run(self, inputs):
-        assert self.sl_net.is_single_layer
-
-        results = self.sl_net.send_inputs(inputs).process()
+        results = self.network.send_inputs(inputs).process()
         winner_index = max(range(len(results)), key=results.__getitem__)
-        winner_result, winner_name = (
-            results[winner_index],
-            self.sl_net.neuron_specs[winner_index].neuron.__class__.__name__,
-        )
+        winner_result = results[winner_index]
 
-        return (
-            "None" if winner_result < self.threshold else winner_name,
-            winner_result,
-        )
+        if winner_result < self.threshold:
+            return ([], winner_result)
+
+        if self.network.is_single_layer:
+            return ([self.network.neuron_specs[winner_index]], winner_result)
+
+        output_index = [
+            i
+            for i, spec in enumerate(self.network.neuron_specs)
+            if spec.mode == "output"
+        ][winner_index]
+
+        neuron_chain = [None for _ in range(len(self.network.neuron_specs))]
+        neuron_chain[output_index] = deepcopy(self.network.neuron_specs[output_index])
+        chain_indices = {output_index}
+
+        for i in range(output_index - 1, -1, -1):
+            intersection = self.network.neuron_specs[i].links.intersection(
+                chain_indices
+            )
+
+            if intersection:
+                neuron_chain[i] = deepcopy(self.network.neuron_specs[i])
+                neuron_chain[i].links = intersection
+                chain_indices.add(i)
+
+        return ([elem for elem in neuron_chain if elem is not None], winner_result)
