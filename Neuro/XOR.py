@@ -5,8 +5,8 @@ class Layer1Neuron1(Neuron):
     def __init__(self, T):
         super().__init__(
             weights=[1.5, -1.0, -1.0],
+            first_is_bias=True,
             activator=lambda x: 1.0 if x >= T else 0.0,
-            receptor=lambda inputs: [1] + inputs,
         )
 
 
@@ -14,8 +14,8 @@ class Layer1Neuron2(Neuron):
     def __init__(self, T):
         super().__init__(
             weights=[0.5, -1.0, -1.0],
+            first_is_bias=True,
             activator=lambda x: 1.0 if x >= T else 0.0,
-            receptor=lambda inputs: [1] + inputs,
         )
 
 
@@ -23,8 +23,8 @@ class Layer2Neuron1(Neuron):
     def __init__(self, T):
         super().__init__(
             weights=[-0.5, 1.0, -1.0],
+            first_is_bias=True,
             activator=lambda x: 1.0 if x >= T else 0.0,
-            receptor=lambda inputs: [1] + inputs,
         )
 
 
@@ -41,8 +41,7 @@ def setup_network():
         )
 
         if all(
-            [operand1 ^ operand2]
-            == Net.send_inputs([[operand1, operand2]] * 2).process()
+            [operand1 ^ operand2] == Net.process([[operand1, operand2]] * 2)
             for operand1, operand2 in operands
         ):
             return Net
