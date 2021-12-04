@@ -1,32 +1,40 @@
+from math import floor
 from random import uniform
 from neurolib import *
+
+X = [[[uniform(0, 2)]] for _ in range(100)]
+Y = [[4 + 3 * x + uniform(0, 0.09)] for [[x]] in X]
+
+
+def step_decay(epoch):
+    initial_lrate = 0.08
+    drop_rate = 0.5
+    drop_period = 10.0
+    lrate = initial_lrate * drop_rate**floor((1 + epoch) / drop_period)
+    return lrate
+
 
 net = NeuralNetwork([
     NeuronSpec(
         neuron=Neuron.randweights_init(
-            2,
-            first_is_bias=True,
-            activator=lambda x: ((x * x + 1)**0.5 - 1) / 2 + x
+            num_weights=2,
+            first_is_bias=True
         ),
         mode="input",
         links={1}
     ),
     NeuronSpec(
         neuron=Neuron.randweights_init(
-            2,
-            first_is_bias=True,
-            activator=lambda x: ((x * x + 1)**0.5 - 1) / 2 + x
+            num_weights=2,
+            first_is_bias=True
         ),
         mode="output",
         links=set()
     )
 ])
 
-X = [[[uniform(0, 2)]] for _ in range(100)]
-Y = [[4 + 3 * x + uniform(0, 0.9)] for [[x]] in X]
-
 net.backprop_fit(
     dataset=list(zip(X, Y)),
-    learning_rate=lambda _: 0.01,
-    mean_error=0.04
+    learning_rate=step_decay,
+    mean_error=0.005
 )

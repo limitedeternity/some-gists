@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from copy import deepcopy
+from copy import copy, deepcopy
 from itertools import takewhile, dropwhile
 from random import uniform, shuffle
 from m_helpers import DotProduct, partial_derivative
@@ -153,10 +153,9 @@ class NeuralNetwork:
 
         for i, spec in enumerate(self.neuron_specs):
             if spec.mode == "input":
-                out_signal = spec.neuron.process(inputs[i])
+                self.memory[i] = copy(inputs[i])
 
-            else:
-                out_signal = spec.neuron.process(self.memory[i])
+            out_signal = spec.neuron.process(self.memory[i])
 
             if self.is_single_layer or spec.mode == "output":
                 self.memory[-1].append(out_signal)
@@ -184,7 +183,7 @@ class NeuralNetwork:
 
         while not sum(
             sum(
-                abs((b - a) / (b + 1 + 1e-10)) for a, b in zip(
+                abs(a - b) / max(abs(b), 0.001) for a, b in zip(
                     self.process(net_in),
                     net_expected_out
                 )
@@ -328,9 +327,9 @@ class NeuralNetwork:
                         ):
                             dMSE_dOut_memory[source_index] = dMSE_dOut
 
-                    for src, dst in zip(range(len(sorted_ci)), sorted_ci):
-                        source_neuron = partial_network.neuron_specs[src].neuron
-                        destination_neuron = self.neuron_specs[dst].neuron
+                    for src_i, dst_i in zip(range(len(sorted_ci)), sorted_ci):
+                        source_neuron = partial_network.neuron_specs[src_i].neuron
+                        destination_neuron = self.neuron_specs[dst_i].neuron
                         destination_neuron.weights = source_neuron.weights
 
             epoch += 1
