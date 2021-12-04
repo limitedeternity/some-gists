@@ -174,11 +174,6 @@ class NeuralNetwork:
         2. The algorithm won't terminate if it's not possible to reach the desired mean error.
         """
 
-        if mean_error < 0 or mean_error > 1:
-            raise AssertionError(
-                "Mean error (%) is a positive value between 0 and 1"
-            )
-
         epoch = 0
 
         while not sum(
