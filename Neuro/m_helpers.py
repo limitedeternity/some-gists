@@ -1,5 +1,12 @@
 class DotProduct:
     def __new__(cls, v1, v2):
+        if len(v1) != len(v2):
+            raise AssertionError(
+                "Expected len(v2) to be {}, got: {}".format(
+                    len(v1), len(v2)
+                )
+            )
+
         return sum(a * b for a, b in zip(v1, v2))
 
     @staticmethod
