@@ -2,12 +2,29 @@ import math
 
 # Datasets:
 xy1 = [(-3.0, -4.0), (-1.0, -0.8), (0.0, 1.6), (1.0, 2.3), (3.0, 1.5)]
-xy2 = [(17.3, 537.0), (17.08, 534.0),
-       (18.8, 555.0), (19.2, 560.0), (18.5, 552.0)]
-xy3 = [(-9.0, 103.0), (-8.0, 84.0), (-7.0, 67.0), (-6.0, 52.0), (-5.0, 39.0), (-4.0, 28.0), (-3.0, 19.0), (-2.0, 12.0),
-       (-1.0, 7.0), (0.0, 4.0), (1.0, 3.0), (2.0, 4.0),
-       (3.0, 7.0), (4.0, 12.0), (5.0, 19.0), (6.0, 28.0), (7.0, 39.0),
-       (8.0, 52.0), (9.0, 67.0), (10.0, 84.0)]
+xy2 = [(17.3, 537.0), (17.08, 534.0), (18.8, 555.0), (19.2, 560.0), (18.5, 552.0)]
+xy3 = [
+    (-9.0, 103.0),
+    (-8.0, 84.0),
+    (-7.0, 67.0),
+    (-6.0, 52.0),
+    (-5.0, 39.0),
+    (-4.0, 28.0),
+    (-3.0, 19.0),
+    (-2.0, 12.0),
+    (-1.0, 7.0),
+    (0.0, 4.0),
+    (1.0, 3.0),
+    (2.0, 4.0),
+    (3.0, 7.0),
+    (4.0, 12.0),
+    (5.0, 19.0),
+    (6.0, 28.0),
+    (7.0, 39.0),
+    (8.0, 52.0),
+    (9.0, 67.0),
+    (10.0, 84.0),
+]
 
 
 # (List[Tuple[Num, Num]] -> List[Num]) -> List[Tuple[Num, Num]] -> Num
@@ -47,29 +64,32 @@ def parabolic_approx(xy):
     r3 = sum(ys)
     c3 = len(xy)
 
-    a = (b1 * c2 * r3 - b1 * r2 * c3 + c1 * c2 * r2 - c1 * c1 * r3 + r1 * c1 * c3 - r1 * c2 * c2) / (a1 * c1 * c3 - a1
-                                                                                                     *
-                                                                                                     c2 * c2 - b1 * b1
-                                                                                                     *
-                                                                                                     c3 + 2 * b1 * c1
-                                                                                                     *
-                                                                                                     c2 - c1 * c1 * c1)
+    a = (
+        b1 * c2 * r3
+        - b1 * r2 * c3
+        + c1 * c2 * r2
+        - c1 * c1 * r3
+        + r1 * c1 * c3
+        - r1 * c2 * c2
+    ) / (a1 * c1 * c3 - a1 * c2 * c2 - b1 * b1 * c3 + 2 * b1 * c1 * c2 - c1 * c1 * c1)
 
-    b = -(a1 * c2 * r3 - a1 * r2 * c3 + c1 * c1 * r2 - b1 * c1 * r3 - c1 * c2 * r1 + b1 * r1 * c3) / (a1 * c1 * c3 - a1
-                                                                                                      *
-                                                                                                      c2 * c2 - b1 * b1
-                                                                                                      *
-                                                                                                      c3 + 2 * b1 * c1
-                                                                                                      *
-                                                                                                      c2 - c1 * c1 * c1)
+    b = -(
+        a1 * c2 * r3
+        - a1 * r2 * c3
+        + c1 * c1 * r2
+        - b1 * c1 * r3
+        - c1 * c2 * r1
+        + b1 * r1 * c3
+    ) / (a1 * c1 * c3 - a1 * c2 * c2 - b1 * b1 * c3 + 2 * b1 * c1 * c2 - c1 * c1 * c1)
 
-    c = (c1 * b1 * r2 - c1 * c1 * r1 - c2 * a1 * r2 + c2 * b1 * r1 + r3 * a1 * c1 - r3 * b1 * b1) / (a1 * c1 * c3 - a1
-                                                                                                     *
-                                                                                                     c2 * c2 - b1 * b1
-                                                                                                     *
-                                                                                                     c3 + 2 * b1 * c1
-                                                                                                     *
-                                                                                                     c2 - c1 * c1 * c1)
+    c = (
+        c1 * b1 * r2
+        - c1 * c1 * r1
+        - c2 * a1 * r2
+        + c2 * b1 * r1
+        + r3 * a1 * c1
+        - r3 * b1 * b1
+    ) / (a1 * c1 * c3 - a1 * c2 * c2 - b1 * b1 * c3 + 2 * b1 * c1 * c2 - c1 * c1 * c1)
 
     # Weights - [a, b, c]; Inputs - [x * x, x, 1]; Activator - lambda x: x
     return list(map(lambda x: a * x * x + b * x + c, xs))
@@ -92,7 +112,7 @@ def exponential_approx(xy):
     # b = math.e**B
     # a**x * b = (math.e**A)**x * (math.e**B) = math.e**(A * x + B)
     # Weights - [A, B]; Inputs - [x, 1]; Activator - lambda x: math.e**x
-    return list(map(lambda x: math.e**(A * x + B), xs))
+    return list(map(lambda x: math.e ** (A * x + B), xs))
 
 
 fn_list = [linear_approx, parabolic_approx, exponential_approx]
@@ -104,17 +124,11 @@ print(xy1_results)
 print(xy2_results)
 print(xy3_results)
 
-xy1_winner = fn_list[
-    min(range(len(fn_list)), key=xy1_results.__getitem__)
-].__name__
+xy1_winner = fn_list[min(range(len(fn_list)), key=xy1_results.__getitem__)].__name__
 
-xy2_winner = fn_list[
-    min(range(len(fn_list)), key=xy2_results.__getitem__)
-].__name__
+xy2_winner = fn_list[min(range(len(fn_list)), key=xy2_results.__getitem__)].__name__
 
-xy3_winner = fn_list[
-    min(range(len(fn_list)), key=xy3_results.__getitem__)
-].__name__
+xy3_winner = fn_list[min(range(len(fn_list)), key=xy3_results.__getitem__)].__name__
 
 print("Best for dataset 1:", xy1_winner)
 print("Best for dataset 2:", xy2_winner)

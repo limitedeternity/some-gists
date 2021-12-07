@@ -34,9 +34,9 @@ def setup_network():
     for T in map(lambda x: x / 10, range(-20, 25, 5)):
         Net = NeuralNetwork(
             [
-                NeuronSpec(neuron=Layer1Neuron1(T), mode="input", links={2}),
-                NeuronSpec(neuron=Layer1Neuron2(T), mode="input", links={2}),
-                NeuronSpec(neuron=Layer2Neuron1(T), mode="output", links=set()),
+                NeuronSpec(neuron=Layer1Neuron1(T), role=NeuronRole.INPUT, links={2}),
+                NeuronSpec(neuron=Layer1Neuron2(T), role=NeuronRole.INPUT, links={2}),
+                NeuronSpec(neuron=Layer2Neuron1(T), role=NeuronRole.OUTPUT, links=set()),
             ]
         )
 

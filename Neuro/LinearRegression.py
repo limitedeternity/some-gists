@@ -10,31 +10,23 @@ def step_decay(epoch):
     initial_lrate = 0.08
     drop_rate = 0.5
     drop_period = 10.0
-    lrate = initial_lrate * drop_rate**floor((1 + epoch) / drop_period)
+    lrate = initial_lrate * drop_rate ** floor((1 + epoch) / drop_period)
     return lrate
 
 
-net = NeuralNetwork([
-    NeuronSpec(
-        neuron=Neuron.randweights_init(
-            num_weights=2,
-            first_is_bias=True
+net = NeuralNetwork(
+    [
+        NeuronSpec(
+            neuron=Neuron.randweights_init(num_weights=2, first_is_bias=True),
+            role=NeuronRole.INPUT,
+            links={1},
         ),
-        mode="input",
-        links={1}
-    ),
-    NeuronSpec(
-        neuron=Neuron.randweights_init(
-            num_weights=2,
-            first_is_bias=True
+        NeuronSpec(
+            neuron=Neuron.randweights_init(num_weights=2, first_is_bias=True),
+            role=NeuronRole.OUTPUT,
+            links=set(),
         ),
-        mode="output",
-        links=set()
-    )
-])
-
-net.backprop_fit(
-    dataset=list(zip(X, Y)),
-    learning_rate=step_decay,
-    mean_error=0.005
+    ]
 )
+
+net.backprop_fit(dataset=list(zip(X, Y)), learning_rate=step_decay, mean_error=0.004)

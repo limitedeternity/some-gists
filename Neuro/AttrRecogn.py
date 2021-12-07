@@ -19,9 +19,9 @@ class FishNeuron(Neuron):
 selector = WTASelection(
     NeuralNetwork(
         [
-            NeuronSpec(neuron=MammalNeuron(), mode="input", links=set()),
-            NeuronSpec(neuron=BirdNeuron(), mode="input", links=set()),
-            NeuronSpec(neuron=FishNeuron(), mode="input", links=set()),
+            NeuronSpec(neuron=MammalNeuron(), role=NeuronRole.INPUT, links=set()),
+            NeuronSpec(neuron=BirdNeuron(), role=NeuronRole.INPUT, links=set()),
+            NeuronSpec(neuron=FishNeuron(), role=NeuronRole.INPUT, links=set()),
         ]
     ),
     10.0,

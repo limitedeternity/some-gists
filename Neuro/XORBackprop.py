@@ -11,7 +11,7 @@ net = NeuralNetwork([
             first_is_bias=True,
             activator=lambda x: 1 / (1 + math.e**(-x))
         ),
-        mode="input",
+        role=NeuronRole.INPUT,
         links={2}
     ),
     NeuronSpec(
@@ -20,7 +20,7 @@ net = NeuralNetwork([
             first_is_bias=True,
             activator=lambda x: 1 / (1 + math.e**(-x))
         ),
-        mode="input",
+        role=NeuronRole.INPUT,
         links={2}
     ),
     NeuronSpec(
@@ -29,7 +29,7 @@ net = NeuralNetwork([
             first_is_bias=True,
             activator=lambda x: 1 / (1 + math.e**(-x))
         ),
-        mode="output",
+        role=NeuronRole.OUTPUT,
         links=set()
     )
 ])
