@@ -41,6 +41,48 @@ class Neuron:
 
         return self.activator(self.stimulator(inputs))
 
+    def rozenblatt_fit(self, dataset, learning_rate):
+        # type: (list[tuple[list[float], float]], Callable[[int], float]) -> Neuron
+        """
+        Warning:
+        1. The algorithm is only applicable to binary step activation functions.
+        2. The algorithm won't terminate if it's impossible to fit the neuron to dataset.
+        """
+
+        epoch, errors = (0, len(dataset))
+
+        while errors > 0:
+            errors = 0
+            shuffle(dataset)
+
+            for inputs, res_ideal in dataset:
+                res_real = self.process(inputs)
+
+                if res_real == res_ideal:
+                    continue
+
+                errors += 1
+
+                corr_inputs = self.receptor(inputs)
+                while res_real != res_ideal:
+                    for weight_index in range(len(self.weights)):
+                        self.weights[weight_index] += (
+                            learning_rate(epoch)
+                            * (res_ideal - res_real)
+                            * corr_inputs[weight_index]
+                        )
+
+                    res_real = self.process(inputs)
+
+            if __debug__:
+                print(
+                    "Epoch {} error amount: {}".format(epoch, errors)
+                )
+
+            epoch += 1
+
+        return self
+
 
 class NeuronRole(Enum):
     INPUT = 0
@@ -175,12 +217,11 @@ class NeuralNetwork:
         """
         Warning:
         1. The algorithm may not terminate if derivative of any activation function is zero.
-        2. The algorithm won't terminate if it's not possible to reach the desired mean error.
+        2. The algorithm won't terminate if it's impossible to reach the desired mean error.
         """
 
-        epoch = 0
-
-        while (
+        epoch, real_mean_error = (
+            0,
             sum(
                 sum(
                     abs(a - b) / max(abs(b), 0.001)
@@ -190,8 +231,9 @@ class NeuralNetwork:
                 for net_in, net_expected_out in dataset
             )
             / len(dataset)
-            > mean_error
-        ):
+        )
+
+        while real_mean_error > mean_error:
 
             shuffle(dataset)
 
@@ -322,21 +364,24 @@ class NeuralNetwork:
                         destination_neuron = self.neuron_specs[dst_i].neuron
                         destination_neuron.weights = source_neuron.weights
 
-            epoch += 1
+            epoch, real_mean_error = (
+                epoch + 1,
+                sum(
+                    sum(
+                        abs(a - b) / max(abs(b), 0.001)
+                        for a, b in zip(self.process(net_in), net_expected_out)
+                    )
+                    / len(net_expected_out)
+                    for net_in, net_expected_out in dataset
+                )
+                / len(dataset)
+            )
 
             if __debug__:
                 print(
                     "Epoch {} mean error: {:.2%}".format(
                         epoch,
-                        sum(
-                            sum(
-                                abs(a - b) / max(abs(b), 0.001)
-                                for a, b in zip(self.process(net_in), net_expected_out)
-                            )
-                            / len(net_expected_out)
-                            for net_in, net_expected_out in dataset
-                        )
-                        / len(dataset),
+                        real_mean_error,
                     )
                 )
 
