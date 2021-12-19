@@ -1,0 +1,70 @@
+    21. 0  _ 1Хэширование . 0:
+
+   OpenSSL> dgst -sha256 message.txt
+
+.
+                     3Асимметричная криптография
+
+    22. 0  _ 1Генерация закрытого RSA-ключа . 0:
+
+   OpenSSL> genpkey -algorithm RSA -out privatekey.pem -pkeyopt rsa_keygen_bits:1024
+
+    23. 0  _ 1Генерация открытого RSA-ключа . 0:
+
+   OpenSSL> rsa -in privatekey.pem -out publickey.pem -pubout
+
+.
+    24. 0  _ 1Шифрование с помощью RSA-протокола . 0:
+
+   OpenSSL> rsautl -encrypt -inkey publickey.pem -pubin -in message.txt -out message.rsa
+
+    25. 0  _ 1Дешифрование с помощью RSA-протокола . 0:
+
+   OpenSSL> rsautl -decrypt -inkey privatekey.pem -in message.rsa -out message.dec
+
+.
+                      3Симметричная криптография
+
+    26. 0  _ 1Симметричное шифрование AES . 0:
+
+   OpenSSL> enc -aes-256-cbc -in Lr-03-RSA.txt -out test.bin
+
+    27. 0  _ 1Дешифрование для AES . 0:
+
+   OpenSSL> enc -d -aes-256-cbc -in test.bin -out test.dec
+
+.
+                     3Эллиптическая криптография
+
+    28. 0  _ 1Генерация файла с заданными параметрами . 0 secp256k1:
+
+   OpenSSL> ecparam -name secp256k1 -out secp256k1.pem
+
+    29. 0  _ 1Анализ полученного файла . 0 secp256k1.pem, содержащего все пара-
+метры эллиптической кривой:
+
+   OpenSSL> ecparam -in secp256k1.pem -text -param_enc explicit -out secp256k1.txt
+
+    210. 0  _ 1Генерация 0  1закрытого ключа для эллиптической криптографии . 0:
+
+   OpenSSL> ecparam -name secp256k1 -genkey -noout -out ec-privatekey.pem
+
+    211. 0  _ 1Исследование закрытого ключа . 0 (детальное):
+
+   OpenSSL> ec -in ec-privatekey.pem -text -noout
+
+    212. 0  _ 1Генерация открытого ключа на основе найденного закрытого ключа . 0:
+
+   OpenSSL> ec -in ec-privatekey.pem -pubout -out ec-pubkey.pem
+
+    213. 0  _ 1Исследование открытого ключа . 0 (детальное):
+
+   OpenSSL> ec -in ec-pubkey.pem -pubin -text -noout
+
+.
+    214. 3  _ 1Электронная подпись с помощью ECC . 0:
+
+   OpenSSL> ecparam -name secp256k1 -genkey -noout -out ec-privatekey.pem
+   OpenSSL> ec -in ec-privatekey.pem -pubout -out ec-pubkey.pem
+   OpenSSL> dgst -sha256 -sign ec-privatekey.pem -out signature.bin message.txt
+   OpenSSL> dgst -sha256 -verify ec-pubkey.pem -signature signature.bin message.txt
