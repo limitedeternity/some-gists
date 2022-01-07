@@ -272,9 +272,9 @@ class NeuralNetwork:
 
                         sorted_ci = sorted(chain_indices)
 
-                        link_correction_map = dict(
-                            zip(sorted_ci, range(len(sorted_ci)))
-                        )
+                        link_correction_map = {
+                            src_i: dst_i for dst_i, src_i in enumerate(sorted_ci)
+                        }
 
                         for elem in neuron_chain:
                             elem.links = {
@@ -359,7 +359,7 @@ class NeuralNetwork:
                         ):
                             dMSE_dOut_memory[source_index] = dMSE_dOut
 
-                    for src_i, dst_i in zip(range(len(sorted_ci)), sorted_ci):
+                    for src_i, dst_i in enumerate(sorted_ci):
                         source_neuron = partial_network.neuron_specs[src_i].neuron
                         destination_neuron = self.neuron_specs[dst_i].neuron
                         destination_neuron.weights = source_neuron.weights
@@ -437,7 +437,9 @@ class WTASelection:
 
         sorted_ci = sorted(chain_indices)
 
-        link_correction_map = dict(zip(sorted_ci, range(len(neuron_chain))))
+        link_correction_map = {
+            src_i: dst_i for dst_i, src_i in enumerate(sorted_ci)
+        }
 
         for elem in neuron_chain:
             elem.links = {link_correction_map[link] for link in elem.links}
