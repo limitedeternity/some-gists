@@ -1,4 +1,4 @@
-import math
+from math import exp
 from neurolib import *
 
 X = [[[0.0, 0.0]] * 2, [[0.0, 1.0]] * 2, [[1.0, 0.0]] * 2, [[1.0, 1.0]] * 2]
@@ -9,7 +9,7 @@ net = NeuralNetwork([
         neuron=Neuron.randweights_init(
             num_weights=3,
             first_is_bias=True,
-            activator=lambda x: 1 / (1 + math.e**(-x))
+            activator=lambda x: 1 / (1 + exp(-x))
         ),
         role=NeuronRole.INPUT,
         links={2}
@@ -18,7 +18,7 @@ net = NeuralNetwork([
         neuron=Neuron.randweights_init(
             num_weights=3,
             first_is_bias=True,
-            activator=lambda x: 1 / (1 + math.e**(-x))
+            activator=lambda x: 1 / (1 + exp(-x))
         ),
         role=NeuronRole.INPUT,
         links={2}
@@ -27,7 +27,7 @@ net = NeuralNetwork([
         neuron=Neuron.randweights_init(
             num_weights=3,
             first_is_bias=True,
-            activator=lambda x: 1 / (1 + math.e**(-x))
+            activator=lambda x: 1 / (1 + exp(-x))
         ),
         role=NeuronRole.OUTPUT,
         links=set()

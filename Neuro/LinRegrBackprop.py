@@ -6,7 +6,7 @@ X = [[[uniform(0, 2)]] for _ in range(100)]
 Y = [[4 + 3 * x + uniform(0, 0.09)] for [[x]] in X]
 
 
-def step_decay(epoch):
+def alpha_step_decay(epoch):
     initial_lrate = 0.08
     drop_rate = 0.5
     drop_period = 10.0
@@ -29,4 +29,8 @@ net = NeuralNetwork(
     ]
 )
 
-net.backprop_fit(dataset=list(zip(X, Y)), learning_rate=step_decay, mean_error=0.004)
+net.backprop_fit(
+    dataset=list(zip(X, Y)),
+    learning_rate=alpha_step_decay,
+    mean_error=4e-3
+)
