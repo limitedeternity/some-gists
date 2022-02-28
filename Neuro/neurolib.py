@@ -224,7 +224,7 @@ class NeuralNetwork:
             0,
             sum(
                 sum(
-                    abs(a - b) / max(abs(b), 0.001)
+                    abs(a - b) / max(abs(b), 1e-3)
                     for a, b in zip(self.process(net_in), net_expected_out)
                 )
                 / len(net_expected_out)
@@ -368,7 +368,7 @@ class NeuralNetwork:
                 epoch + 1,
                 sum(
                     sum(
-                        abs(a - b) / max(abs(b), 0.001)
+                        abs(a - b) / max(abs(b), 1e-3)
                         for a, b in zip(self.process(net_in), net_expected_out)
                     )
                     / len(net_expected_out)

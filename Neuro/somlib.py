@@ -54,7 +54,11 @@ class SOM:
         epoch, real_mean_error = (
             0,
             sum(
-                self._calc_distance(feature_vector, weights)
+                sum(
+                    abs(a - b) / max(abs(b), 1e-3)
+                    for a, b in zip(feature_vector, weights)
+                )
+                / len(weights)
                 for feature_vector, weights in zip(dataset, map(lambda vec: self._choose_bmu(vec).weights, dataset))
             )
             / len(dataset)
@@ -88,8 +92,8 @@ class SOM:
                                          best_matching_unit.x_coord + neighbours_right]:
 
                         theta = exp(
-                            -(self._calc_distance([best_matching_unit.y_coord, best_matching_unit.x_coord],
-                                                  [neighbour.y_coord, neighbour.x_coord]) ** 2)
+                            -1 * self._calc_distance([best_matching_unit.y_coord, best_matching_unit.x_coord],
+                                                     [neighbour.y_coord, neighbour.x_coord]) ** 2
                             / (2 * affection_range(epoch) ** 2)
                         )
 
@@ -102,7 +106,11 @@ class SOM:
             epoch, real_mean_error = (
                 epoch + 1,
                 sum(
-                    self._calc_distance(feature_vector, weights)
+                    sum(
+                        abs(a - b) / max(abs(b), 1e-3)
+                        for a, b in zip(feature_vector, weights)
+                    )
+                    / len(weights)
                     for feature_vector, weights in zip(dataset, map(lambda vec: self._choose_bmu(vec).weights, dataset))
                 )
                 / len(dataset)
