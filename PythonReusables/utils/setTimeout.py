@@ -12,11 +12,12 @@ def setTimeout(interval):
             return t
         return wrap
     return decorator
- 
+
 
 @setTimeout(5)
 def hello():
     print("Hello!")
 
 
-hello()
+if __name__ == "__main__":
+    hello()

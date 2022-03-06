@@ -14,11 +14,12 @@ def setInterval(interval):
             return t
         return wrap
     return decorator
- 
+
 
 @setInterval(5)
 def hello():
     print("Hello!")
 
 
-hello()
+if __name__ == "__main__":
+    hello()

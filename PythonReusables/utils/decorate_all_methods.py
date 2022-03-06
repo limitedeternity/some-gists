@@ -12,8 +12,7 @@ class CallCheckDecoratorClass(object):
 
             return wrap
 
-        else:
-            return attr
+        return attr
 
 
 class Bar(CallCheckDecoratorClass):
