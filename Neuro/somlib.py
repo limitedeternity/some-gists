@@ -44,6 +44,11 @@ class SOM:
 
         self.norm_type = norm_type
 
+    def __repr__(self):
+        # type: () -> str
+
+        return '\n'.join('\t'.join(str(cell.weights) for cell in row) for row in self.cells)
+
     def fit(self, dataset, learning_rate, affection_range, mean_error):
         # type: (list[list[float]], Callable[[int], float], Callable[[int], float], float) -> SOM
         """
@@ -59,7 +64,7 @@ class SOM:
                     for a, b in zip(feature_vector, weights)
                 )
                 / len(weights)
-                for feature_vector, weights in zip(dataset, map(lambda vec: self._choose_bmu(vec).weights, dataset))
+                for feature_vector, weights in zip(dataset, map(lambda vec: self.process(vec).weights, dataset))
             )
             / len(dataset)
         )
@@ -70,7 +75,7 @@ class SOM:
             neighbour_range = max(1, int(affection_range(epoch)))
 
             for feature_vector in dataset:
-                best_matching_unit = self._choose_bmu(feature_vector)
+                best_matching_unit = self.process(feature_vector)
 
                 neighbours_up = min(
                     neighbour_range, best_matching_unit.y_coord
@@ -92,8 +97,8 @@ class SOM:
                                          best_matching_unit.x_coord + neighbours_right]:
 
                         theta = exp(
-                            -1 * self._calc_distance([best_matching_unit.y_coord, best_matching_unit.x_coord],
-                                                     [neighbour.y_coord, neighbour.x_coord]) ** 2
+                            -1 * self.calc_distance([best_matching_unit.y_coord, best_matching_unit.x_coord],
+                                                    [neighbour.y_coord, neighbour.x_coord]) ** 2
                             / (2 * affection_range(epoch) ** 2)
                         )
 
@@ -111,7 +116,7 @@ class SOM:
                         for a, b in zip(feature_vector, weights)
                     )
                     / len(weights)
-                    for feature_vector, weights in zip(dataset, map(lambda vec: self._choose_bmu(vec).weights, dataset))
+                    for feature_vector, weights in zip(dataset, map(lambda vec: self.process(vec).weights, dataset))
                 )
                 / len(dataset)
             )
@@ -126,21 +131,16 @@ class SOM:
 
         return self
 
-    def process(self, input_vector):
-        # type: (list[float]) -> Cell
-
-        return self._choose_bmu(input_vector)
-
-    def _choose_bmu(self, feature_vector):
+    def process(self, feature_vector):
         # type: (list[float]) -> Cell
 
         best_matching_unit = self.cells[0][0]
-        min_distance = self._calc_distance(
+        min_distance = self.calc_distance(
             feature_vector, best_matching_unit.weights
         )
 
         for cell in islice(chain.from_iterable(self.cells), 1, None):
-            dist = self._calc_distance(
+            dist = self.calc_distance(
                 feature_vector, cell.weights
             )
 
@@ -150,7 +150,7 @@ class SOM:
 
         return best_matching_unit
 
-    def _calc_distance(self, feature_vector, weights):
+    def calc_distance(self, feature_vector, weights):
         # type: (list[float], list[float]) -> float
 
         if len(feature_vector) != len(weights):
