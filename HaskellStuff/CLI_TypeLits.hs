@@ -3,10 +3,11 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-import GHC.TypeLits
-import Data.Typeable
-import System.Environment
 import Control.Monad
+import Data.Maybe
+import Data.Typeable
+import GHC.TypeLits
+import System.Environment
 
 -- | An existential box to place anything that is a Handler and KnownSymbol.
 data SomeHandler
@@ -27,9 +28,7 @@ handlers :: [SomeHandler]
 handlers = [SomeHandler (Proxy :: Proxy "dance")]
 
 same :: (KnownSymbol a, KnownSymbol b) => Proxy a -> Proxy b -> Bool
-same a b = case sameSymbol a b of
-             Just _ -> True
-             Nothing -> False
+same a b = isJust $ sameSymbol a b
 
 handleCommand :: [String] -> IO ()
 handleCommand []      = pure ()
