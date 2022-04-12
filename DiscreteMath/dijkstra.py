@@ -67,7 +67,7 @@ def dijkstra(matrix, source, dest):
         print("-----")
 
     print("Восстановление пути:\n")
-    path, curr_vertex = list(), dest
+    path, curr_vertex = [], dest
     while prev_vertices[curr_vertex] != None:
         print(f"{prev_vertices[curr_vertex]} <- {curr_vertex}")
         path.insert(0, curr_vertex)
