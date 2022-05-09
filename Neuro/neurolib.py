@@ -7,6 +7,8 @@ from m_helpers import DotProduct, partial_derivative
 
 
 class Neuron:
+    __slots__ = "weights", "first_is_bias", "receptor", "activator"
+
     def __init__(self, weights, first_is_bias=False, activator=lambda x: x):
         # type: (list[float], bool, Callable[[float], float]) -> None
 
@@ -91,6 +93,8 @@ class NeuronRole(Enum):
 
 
 class NeuronSpec:
+    __slots__ = "neuron", "role", "links"
+
     def __init__(self, neuron, role, links):
         # type: (Neuron, NeuronRole, set[int]) -> None
 
@@ -105,6 +109,8 @@ class NeuronSpec:
 
 
 class NeuralNetwork:
+    __slots__ = "is_single_layer", "memory", "neuron_specs"
+
     def __init__(self, neuron_specs):
         # type: (list[NeuronSpec]) -> None
 
@@ -393,6 +399,8 @@ class WTASelection:
     Selects a neuron chain which produced the strongest response, which has passed the threshold.
     The chain can be used to construct a new network.
     """
+
+    __slots__ = "network", "threshold"
 
     def __init__(self, network, threshold):
         # type: (NeuralNetwork, float) -> None

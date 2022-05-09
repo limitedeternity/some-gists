@@ -12,6 +12,8 @@ class VectorNorm(Enum):
 
 
 class Cell:
+    __slots__ = "weights", "x_coord", "y_coord"
+
     def __init__(self, x_coord, y_coord, num_features):
         # type: (int, int, int) -> None
 
@@ -28,6 +30,8 @@ class Cell:
 
 
 class SOM:
+    __slots__ = "cells", "norm_type"
+
     def __init__(self, map_width, map_height, num_features, norm_type=VectorNorm.CHEBYSHEV):
         # type: (int, int, int, VectorNorm) -> None
 
