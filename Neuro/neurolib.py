@@ -67,7 +67,7 @@ class Neuron:
 
                 corr_inputs = self.receptor(inputs)
                 while res_real != res_ideal:
-                    for weight_index in range(len(self.weights)):
+                    for weight_index, _ in enumerate(self.weights):
                         self.weights[weight_index] += (
                             learning_rate(epoch)
                             * (res_ideal - res_real)
@@ -77,9 +77,7 @@ class Neuron:
                     res_real = self.process(inputs)
 
             if __debug__:
-                print(
-                    "Epoch {} error amount: {}".format(epoch, errors)
-                )
+                print("Epoch {} error amount: {}".format(epoch, errors))
 
             epoch += 1
 
@@ -135,7 +133,7 @@ class NeuralNetwork:
             pass
 
         if not all(
-            link_index > cur_index and link_index < len(neuron_specs)
+            cur_index < link_index < len(neuron_specs)
             for cur_index, spec in enumerate(neuron_specs)
             for link_index in spec.links
         ):
@@ -236,7 +234,7 @@ class NeuralNetwork:
                 / len(net_expected_out)
                 for net_in, net_expected_out in dataset
             )
-            / len(dataset)
+            / len(dataset),
         )
 
         while real_mean_error > mean_error:
@@ -244,7 +242,7 @@ class NeuralNetwork:
             shuffle(dataset)
 
             for net_in, net_expected_out in dataset:
-                for out_index in range(len(net_expected_out)):
+                for out_index, _ in enumerate(net_expected_out):
                     if self.is_single_layer:
                         neuron_chain = [self.neuron_specs[out_index]]
                         sorted_ci = [out_index]
@@ -380,7 +378,7 @@ class NeuralNetwork:
                     / len(net_expected_out)
                     for net_in, net_expected_out in dataset
                 )
-                / len(dataset)
+                / len(dataset),
             )
 
             if __debug__:
@@ -445,9 +443,7 @@ class WTASelection:
 
         sorted_ci = sorted(chain_indices)
 
-        link_correction_map = {
-            src_i: dst_i for dst_i, src_i in enumerate(sorted_ci)
-        }
+        link_correction_map = {src_i: dst_i for dst_i, src_i in enumerate(sorted_ci)}
 
         for elem in neuron_chain:
             elem.links = {link_correction_map[link] for link in elem.links}
