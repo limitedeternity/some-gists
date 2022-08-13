@@ -4,9 +4,7 @@
    Окружение, использованное при разработке: GHC (8.10.x)
 -}
 
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, TupleSections #-}
 
 module LogicTable where
 import Data.List (intercalate, elemIndex, nub)
@@ -80,7 +78,7 @@ instance {-# OVERLAPPING #-} Arity f => Arity ((->) a f) where
 
 
 cartSelfProd :: (Monad m, Num a, Enum a) => m b -> a -> m [b]
-cartSelfProd l n = mapM (\_ -> l) [1..n]
+cartSelfProd l n = mapM (const l) [1..n]
 
 
 numToBool :: (Eq a, Num a) => a -> Bool
@@ -88,14 +86,14 @@ numToBool = (==1)
 
 buildFnFromVec4 :: [Bool] -> (Bool -> Bool -> Bool)
 buildFnFromVec4 lst
-    | (length lst == 4) =
-        \x -> \y -> (!!) lst $ fromJust $ elemIndex [x, y] $ cartSelfProd [False, True] 2
+    | length lst == 4 =
+        \x y -> (!!) lst $ fromJust $ elemIndex [x, y] $ cartSelfProd [False, True] 2
     | otherwise = error "вектор некорректной длины"
 
 buildFnFromVec8 :: [Bool] -> (Bool -> Bool -> Bool -> Bool)
 buildFnFromVec8 lst
-    | (length lst == 8) =
-        \x -> \y -> \z -> (!!) lst $ fromJust $ elemIndex [x, y, z] $ cartSelfProd [False, True] 3
+    | length lst == 8 =
+        \x y z -> (!!) lst $ fromJust $ elemIndex [x, y, z] $ cartSelfProd [False, True] 3
     | otherwise = error "вектор некорректной длины"
 
 
@@ -106,13 +104,13 @@ buildTable fn =
 
 checkFictivity :: [([Bool], Bool)] -> [Bool]
 checkFictivity table
-    | (length table == 4) =
+    | length table == 4 =
         map isFictive 
             [
                 [(i, i+2) | i <- [0, 1]], -- x
                 [(i, i+1) | i <- [0, 2]]  -- y
             ]
-    | (length table == 8) =
+    | length table == 8 =
         map isFictive
             [
                 [(i, i+4) | i <- [0, 1, 2, 3]], -- x
@@ -126,44 +124,44 @@ checkFictivity table
 
 minifyTable :: [([Bool], Bool)] -> [Bool] -> [([Bool], Bool)]
 minifyTable table fictivityVector
-    | (2^(length fictivityVector) == length table) = nub $ filterOutFictiveVars $ getIndexesOfTrue fictivityVector
+    | 2 ^ length fictivityVector == length table = nub $ filterOutFictiveVars $ getIndexesOfTrue fictivityVector
     | otherwise = error "некорректные данные"
         where
             getIndexesOfTrue :: (Num b, Enum b) => [Bool] -> [b]
-            getIndexesOfTrue lst = map snd $ filter fst $ flip zip [0..] lst
+            getIndexesOfTrue lst = map snd $ filter fst $ zip lst [0..]
 
             filterOutFictiveVars :: (Num b, Enum b, Eq b) => [b] -> [([Bool], Bool)]
-            filterOutFictiveVars fictiveVarIndexes = flip map table (
+            filterOutFictiveVars fictiveVarIndexes = map (
                 \pair -> 
-                    flip (,) (snd pair) (
+                    (,snd pair) (
                         map fst $ flip filter (zip (fst pair) [0..]) $ \enumeratedVarState ->
-                            not $ elem (snd enumeratedVarState) fictiveVarIndexes 
+                            snd enumeratedVarState `notElem` fictiveVarIndexes 
                     )
-                )
+                ) table
 
 
 main :: IO ()
 main = do
     let table = buildTable fn
     putStrLn "Таблица истинности:"
-    putStrLn $ intercalate "\n" $ map show $ table
+    putStrLn $ intercalate "\n" $ map show table
     putStrLn ""
 
     let fictivityVector = checkFictivity table
     putStrLn "Фиктивность аргументов:"
-    putStrLn $ intercalate " " $ map show $ fictivityVector
+    putStrLn $ unwords $ map show fictivityVector
     putStrLn ""
 
     let minTable = minifyTable table fictivityVector
     putStrLn "Минифицированная таблица:"
-    putStrLn $ intercalate "\n" $ map show $ minTable
+    putStrLn $ intercalate "\n" $ map show minTable
     putStrLn ""
 
     where
         {-
             Примеры использования:
             1) Лямбда-выражение:
-                fn = \x -> \y -> \z -> not (x |+| y) ~> not (z |*| y)
+                fn = \x y z -> not (x |+| y) ~> not (z |*| y)
             2) Функции:
                 fn x y z = not (x |+| y) ~> not (z |*| y)
             3) Результирующий вектор (двух переменных)
@@ -175,5 +173,5 @@ main = do
         -}
 
         -- Функция (не менять имя):
-        fn = \x -> \y -> \z -> not (x |+| y) ~> not (z |*| y)
+        fn = \x y z -> not (x |+| y) ~> not (z |*| y)
 

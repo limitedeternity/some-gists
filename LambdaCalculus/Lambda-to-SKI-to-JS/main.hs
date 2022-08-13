@@ -48,8 +48,8 @@ execute lambdaExpression argList =
         |> convert
         |> normalize
         |> (++) "const S = f => g => x => f(x)(g(x));\nconst K = x => y => x;\nconst I = x => x;\nconst Free = x => eval(x);const z = 5;\n\nconst fn = "
-        |> flip (++) (";\n\nconsole.log(fn" ++ (concat $ map (\x -> "(" ++ x ++ ")") argList) ++ ");\n") 
-        |> \e -> (readProcess "node" ["-e", e] "" >>= putStrLn)
+        |> flip (++) (";\n\nconsole.log(fn" ++ concatMap (\x -> "(" ++ x ++ ")") argList ++ ");\n") 
+        |> \e -> readProcess "node" ["-e", e] "" >>= putStrLn
 
 export :: Expr -> IO ()
 export lambdaExpression =
@@ -57,7 +57,7 @@ export lambdaExpression =
         |> convert
         |> normalize
         |> (++) "const S = f => g => x => f(x)(g(x));\nconst K = x => y => x;\nconst I = x => x;\nconst Free = x => eval(x);\n\nconst fn = "
-        |> flip (++) (";\nmodule.exports = fn;\n") 
+        |> flip (++) ";\nmodule.exports = fn;\n" 
         |> writeFile "index.js"
 
 
@@ -65,7 +65,7 @@ test1 :: IO ()
 test1 =
     "This is an algorithm validation test.\n"
         |> flip (++) "Go to https://tarao.orezdnu.org/LambdaJS/ and compare (\\f -> \\x -> f x) with ("
-        |> flip (++) (unpack $ replace ":$ " "" $ pack $ show $ convert $ (Lambda "f" (Lambda "x" (Apply (Var "f") (Var "x")))))
+        |> flip (++) (unpack $ replace ":$ " "" $ pack $ show $ convert (Lambda "f" (Lambda "x" (Apply (Var "f") (Var "x")))))
         |> flip (++) ").\nDon't forget to define SKI combinators!\n"
         |> putStrLn
 
