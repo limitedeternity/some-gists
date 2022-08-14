@@ -57,7 +57,7 @@ anyChar = Parser . StateT $ \case
     [] -> empty 
     (c:cs) -> pure (c, cs)
 
-parseIf :: (Char -> Bool)-> Parser Char
+parseIf :: (Char -> Bool) -> Parser Char
 parseIf cond = anyChar >>= \c -> 
     if cond c then pure c
     else Parser . StateT . const $ Left (ParserError "Unmet condition")
@@ -96,7 +96,7 @@ parseDoubleLiteral =
         <*> ((read <$> (('0':) <$> ((:) <$> parseChar '.' <*> digits))) <|> pure 0)
         <*> (((parseChar 'e' <|> parseChar 'E') *> ((*) <$> (plus <|> minus <|> pure 1) <*> (read <$> digits))) <|> pure 0)
     where
-        digits = some $ parseIf isDigit
+        digits = some (parseIf isDigit)
         minus = (-1) <$ parseChar '-'
         plus = 1 <$ parseChar '+'
 
@@ -113,5 +113,5 @@ sepBy :: Parser a   -- Parser for the separators
 sepBy sep element = (:) <$> element <*> many (sep *> element) <|> pure []
 
 
-main :: IO()
+main :: IO ()
 main = undefined
