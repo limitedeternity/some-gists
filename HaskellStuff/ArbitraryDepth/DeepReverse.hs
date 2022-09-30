@@ -5,7 +5,7 @@ class DeepReverse l where
     deepReverse :: l -> l
 
 instance {-# OVERLAPPING #-} DeepReverse [a] => DeepReverse [[a]] where
-    deepReverse = map deepReverse
+    deepReverse = map deepReverse -- . reverse
 
 instance DeepReverse [a] where
     deepReverse = reverse
