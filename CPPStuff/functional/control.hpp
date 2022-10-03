@@ -14,13 +14,6 @@ namespace detail {
 
 namespace helpers {
 
-    template <typename... Ts>
-    struct pack {
-
-        template <typename From, typename To>
-        using replace = std::tuple<std::conditional_t<std::is_same_v<From, Ts>, To, Ts>...>;
-    };
-
     template <template <typename...> class Ctor, typename... Args>
     Ctor<Args...> construct_type(std::tuple<Args...>);
 }
@@ -58,13 +51,13 @@ namespace control {
 
         using ma = decltype(
             helpers::construct_type<Ctor>(
-                typename helpers::pack<Args...>::template replace<detail::morph_tag, a>{}
+                std::tuple<std::conditional_t<std::is_same_v<detail::morph_tag, Args>, a, Args>...>{}
             )
         );
 
         using mb = decltype(
             helpers::construct_type<Ctor>(
-                typename helpers::pack<Args...>::template replace<detail::morph_tag, b>{}
+                std::tuple<std::conditional_t<std::is_same_v<detail::morph_tag, Args>, b, Args>...>{}
             )
         );
 
@@ -130,10 +123,6 @@ namespace alternative {
         }
     };
 
-    /*
-     * alternative::for_maybe<int>::select({}, 5) -> 5
-     * alternative::for_maybe<int>::select({}, {}) -> std::nullopt
-     */
     template <typename... Args>
     struct for_maybe : control::alternative<for_maybe, std::optional, Args...> {
 
@@ -152,10 +141,31 @@ namespace alternative {
 namespace monad {
 
     template <typename... Args>
+    struct for_unique_ptr {
+
+        template <typename From, typename To>
+        struct with_morphism : control::monad<monad::for_unique_ptr, detail::morphism<From, To>, std::unique_ptr, Args...> {
+
+            using a = From;
+            using b = To;
+            using ma = typename with_morphism::base_type::ma;
+            using mb = typename with_morphism::base_type::mb;
+
+            static ma pure(a&& arg) {
+                return std::make_unique<a>(std::move(arg));
+            }
+
+            static mb bind(const ma& arg, const std::function<mb(const a&)>& fun) {
+                return arg ? fun(*arg) : nullptr;
+            }
+        };
+    };
+
+    template <typename... Args>
     struct for_maybe {
 
         template <typename From, typename To>
-        struct with_morphism : control::monad<for_maybe, detail::morphism<From, To>, std::optional, Args...> {
+        struct with_morphism : control::monad<monad::for_maybe, detail::morphism<From, To>, std::optional, Args...> {
 
             using a = From;
             using b = To;
@@ -172,11 +182,14 @@ namespace monad {
         };
     };
 
-    template <typename... Args>
-    struct for_unique_ptr {
+    template <typename E, typename T>
+    struct for_either;
+
+    template <typename T>
+    struct for_either<detail::morph_tag, T> {
 
         template <typename From, typename To>
-        struct with_morphism : control::monad<for_unique_ptr, detail::morphism<From, To>, std::unique_ptr, Args...> {
+        struct with_morphism : control::monad<monad::for_either, detail::morphism<From, To>, data::either, detail::morph_tag, T> {
 
             using a = From;
             using b = To;
@@ -184,27 +197,20 @@ namespace monad {
             using mb = typename with_morphism::base_type::mb;
 
             static ma pure(a&& arg) {
-                return std::make_unique<From>(std::move(arg));
+                return { std::move(arg) };
             }
 
             static mb bind(const ma& arg, const std::function<mb(const a&)>& fun) {
-                return arg ? fun(*arg) : nullptr;
+                return arg.try_left() ? fun(arg.left()) : arg.right();
             }
         };
     };
 
-    /*
-     * monad::for_either<std::exception, detail::morph_tag>::with_morphism<int, long>::bind(5, [](const auto& value) { return value * 2; });
-     * -> 10
-     *
-     * monad::for_either<std::exception, detail::morph_tag>::with_morphism<int, int>::bind(std::bad_alloc(), [](const auto& value) { return value * 2; });
-     * -> std::exception
-     */
-    template <typename... Args>
-    struct for_either {
+    template <typename E>
+    struct for_either<E, detail::morph_tag> {
 
         template <typename From, typename To>
-        struct with_morphism : control::monad<for_either, detail::morphism<From, To>, data::either, Args...> {
+        struct with_morphism : control::monad<monad::for_either, detail::morphism<From, To>, data::either, E, detail::morph_tag> {
 
             using a = From;
             using b = To;
