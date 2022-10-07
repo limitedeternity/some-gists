@@ -167,7 +167,7 @@ namespace alternative {
         }
 
         static fa&& select(fa&& lhs, fa&& rhs) {
-            return std::move(lhs.empty() ? rhs : lhs);
+            return std::forward<fa>(lhs.empty() ? rhs : lhs);
         }
     };
 
@@ -181,7 +181,7 @@ namespace alternative {
         }
 
         static fa&& select(fa&& lhs, fa&& rhs) {
-            return std::move(lhs ? lhs : rhs);
+            return std::forward<fa>(lhs ? lhs : rhs);
         }
     };
 }
