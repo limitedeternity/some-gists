@@ -3,29 +3,95 @@
 
 namespace detail {
 
-    template <typename From, typename To>
-    struct morphism {
-        using from = From;
-        using to = To;
+    template <typename T, typename Enabled = void>
+    struct has_reserve_method : std::false_type {};
+
+    template <typename T>
+    struct has_reserve_method<T, std::enable_if_t<std::is_member_function_pointer_v<decltype(&T::reserve)>>> : std::true_type {};
+
+    template <typename... Ts>
+    struct parameter_pack {
+
+        static constexpr size_t size = sizeof...(Ts);
+
+        template <template <typename...> class Ctor>
+        using unpack = Ctor<Ts...>;
+
+        template <typename What, typename With, typename T>
+        struct _replace {
+            using type = std::conditional_t<std::is_same_v<What, T>, With, T>;
+        };
+
+        template <typename What, typename With, template <typename...> class Ctor, typename... Args>
+        struct _replace<What, With, Ctor<Args...>> {
+            using type = std::conditional_t<
+                std::is_same_v<What, Ctor<Args...>>, With,
+                Ctor<typename _replace<What, With, Args>::type...>
+            >;
+        };
+
+        template <typename What, typename With>
+        using replace = parameter_pack<typename _replace<What, With, Ts>::type...>;
+
+        template <typename What, typename T>
+        struct _contains {
+            using trait = std::is_same<What, T>;
+        };
+
+        template <typename What, template <typename...> class Ctor, typename... Args>
+        struct _contains<What, Ctor<Args...>> {
+            using trait = std::disjunction<std::is_same<What, Ctor<Args...>>, typename _contains<What, Args>::trait...>;
+        };
+
+        template <typename What>
+        using contains = std::disjunction<typename _contains<What, Ts>::trait...>;
+
+        template <typename Iseq, typename T>
+        struct _at;
+
+        template <size_t I, template <typename...> class Ctor, typename... Args>
+        struct _at<std::index_sequence<I>, Ctor<Args...>> {
+            using type = std::tuple_element_t<I, std::tuple<Args...>>;
+        };
+
+        template <size_t I, size_t... Is, template <typename...> class Ctor, typename... Args>
+        struct _at<std::index_sequence<I, Is...>, Ctor<Args...>> {
+            using type = typename _at<std::index_sequence<Is...>, std::tuple_element_t<I, std::tuple<Args...>>>::type;
+        };
+
+        template <size_t... Is>
+        using at = typename _at<std::index_sequence<Is...>, parameter_pack<Ts...>>::type;
     };
 
-    struct morph_tag {};
-}
-
-namespace helpers {
+    template <typename Type>
+    struct type_constructor_of;
 
     template <template <typename...> class Ctor, typename... Args>
-    Ctor<Args...> construct_type(std::tuple<Args...>);
+    struct type_constructor_of<Ctor<Args...>> {
+        template <typename... Nargs>
+        using constructor = Ctor<Nargs...>;
+        using arguments = parameter_pack<Args...>;
+    };
+}
+
+namespace utility {
+    struct morph_tag {};
 }
 
 namespace control {
 
-    template <template <typename...> class Impl, template <typename...> class Ctor, typename... Args>
+    template <class ImplType>
     struct alternative {
 
-        using fa = Ctor<Args...>;
-        using this_type = Impl<Args...>;
-        using base_type = alternative<Impl, Ctor, Args...>;
+        using fa =
+            typename detail::type_constructor_of<ImplType>
+            ::arguments
+            ::template at<0>;
+
+        // -------------------
+
+        using this_type = ImplType;
+        using base_type = alternative<ImplType>;
 
     private:
         struct type_check {
@@ -41,32 +107,42 @@ namespace control {
         }
     };
 
-    template <template <typename...> class Impl, class Morph, template <typename...> class Ctor, typename... Args>
+    template <class ImplFromTo, typename Type>
     struct monad {
 
-        using a = typename Morph::from;
-        using b = typename Morph::to;
+        using a =
+            typename detail::type_constructor_of<ImplFromTo>
+            ::arguments
+            ::template at<0>;
 
-        static_assert((std::is_same_v<detail::morph_tag, Args> || ...));
+        using b =
+            typename detail::type_constructor_of<ImplFromTo>
+            ::arguments
+            ::template at<1>;
 
-        using ma = decltype(
-            helpers::construct_type<Ctor>(
-                std::tuple<std::conditional_t<std::is_same_v<detail::morph_tag, Args>, a, Args>...>{}
-            )
-        );
+        // -------------------
 
-        using mb = decltype(
-            helpers::construct_type<Ctor>(
-                std::tuple<std::conditional_t<std::is_same_v<detail::morph_tag, Args>, b, Args>...>{}
-            )
-        );
+        using _ctor = detail::type_constructor_of<Type>;
+        static_assert(_ctor::arguments::template contains<utility::morph_tag>::value);
 
-        using this_type = typename Impl<Args...>::template with_morphism<a, b>;
-        using base_type = monad<Impl, Morph, Ctor, Args...>;
+        using ma =
+            typename _ctor::arguments
+            ::template replace<utility::morph_tag, a>
+            ::template unpack<_ctor::constructor>;
+
+        using mb =
+            typename _ctor::arguments
+            ::template replace<utility::morph_tag, b>
+            ::template unpack<_ctor::constructor>;
+
+        // -------------------
+
+        using this_type = ImplFromTo;
+        using base_type = monad<ImplFromTo, Type>;
 
     private:
         struct type_check {
-            ma(*pure)(a&&);                                            // pure :: a -> m a
+            ma(*pure)(const a&);                                       // pure :: a -> m a
             mb(*bind)(const ma&, const std::function<mb(const a&)>&);  // bind :: m a -> (a -> m b) -> m b
         } _ {
             this_type::pure,
@@ -81,24 +157,10 @@ namespace control {
 
 namespace alternative {
 
-    template <typename... Args>
-    struct for_vector : control::alternative<for_vector, std::vector, Args...> {
+    template <typename Type>
+    struct for_container_like : control::alternative<for_container_like<Type>> {
 
-        using fa = std::vector<Args...>;
-
-        static fa empty() {
-            return {};
-        }
-
-        static fa&& select(fa&& lhs, fa&& rhs) {
-            return std::move(lhs.empty() ? rhs : lhs);
-        }
-    };
-
-    template <typename... Args>
-    struct for_basic_string : control::alternative<for_basic_string, std::basic_string, Args...> {
-
-        using fa = std::basic_string<Args...>;
+        using fa = typename for_container_like::base_type::fa;
 
         static fa empty() {
             return {};
@@ -109,24 +171,10 @@ namespace alternative {
         }
     };
 
-    template <typename... Args>
-    struct for_unique_ptr : control::alternative<for_unique_ptr, std::unique_ptr, Args...> {
+    template <typename Type>
+    struct for_bool_like : control::alternative<for_bool_like<Type>> {
 
-        using fa = std::unique_ptr<Args...>;
-
-        static fa empty() {
-            return {};
-        }
-
-        static fa&& select(fa&& lhs, fa&& rhs) {
-            return std::move(lhs ? lhs : rhs);
-        }
-    };
-
-    template <typename... Args>
-    struct for_maybe : control::alternative<for_maybe, std::optional, Args...> {
-
-        using fa = std::optional<Args...>;
+        using fa = typename for_bool_like::base_type::fa;
 
         static fa empty() {
             return {};
@@ -140,19 +188,54 @@ namespace alternative {
 
 namespace monad {
 
+    template <typename Type>
+    struct for_container_like {
+
+        template <typename From, typename To>
+        struct with_morphism : control::monad<with_morphism<From, To>, Type> {
+
+            using a = typename with_morphism::base_type::a;
+            using b = typename with_morphism::base_type::b;
+            using ma = typename with_morphism::base_type::ma;
+            using mb = typename with_morphism::base_type::mb;
+
+            static ma pure(const a& arg) {
+                return std::initializer_list<a>{arg};
+            }
+
+            static mb bind(const ma& arg, const std::function<mb(const a&)>& fun) {
+
+                mb result;
+
+                for (const a& item : arg) {
+
+                    const mb tmp = fun(item);
+
+                    if constexpr (detail::has_reserve_method<mb>::value) {
+                        result.reserve(result.size() + tmp.size());
+                    }
+
+                    result.insert(result.cend(), tmp.cbegin(), tmp.cend());
+                }
+
+                return result;
+            }
+        };
+    };
+
     template <typename... Args>
     struct for_unique_ptr {
 
         template <typename From, typename To>
-        struct with_morphism : control::monad<monad::for_unique_ptr, detail::morphism<From, To>, std::unique_ptr, Args...> {
+        struct with_morphism : control::monad<with_morphism<From, To>, std::unique_ptr<Args...>> {
 
-            using a = From;
-            using b = To;
+            using a = typename with_morphism::base_type::a;
+            using b = typename with_morphism::base_type::b;
             using ma = typename with_morphism::base_type::ma;
             using mb = typename with_morphism::base_type::mb;
 
-            static ma pure(a&& arg) {
-                return std::make_unique<a>(std::move(arg));
+            static ma pure(const a& arg) {
+                return std::make_unique<a>(arg);
             }
 
             static mb bind(const ma& arg, const std::function<mb(const a&)>& fun) {
@@ -161,19 +244,19 @@ namespace monad {
         };
     };
 
-    template <typename... Args>
+    template <typename T>
     struct for_maybe {
 
         template <typename From, typename To>
-        struct with_morphism : control::monad<monad::for_maybe, detail::morphism<From, To>, std::optional, Args...> {
+        struct with_morphism : control::monad<with_morphism<From, To>, std::optional<T>> {
 
-            using a = From;
-            using b = To;
+            using a = typename with_morphism::base_type::a;
+            using b = typename with_morphism::base_type::b;
             using ma = typename with_morphism::base_type::ma;
             using mb = typename with_morphism::base_type::mb;
 
-            static ma pure(a&& arg) {
-                return { std::move(arg) };
+            static ma pure(const a& arg) {
+                return arg;
             }
 
             static mb bind(const ma& arg, const std::function<mb(const a&)>& fun) {
@@ -186,18 +269,18 @@ namespace monad {
     struct for_either;
 
     template <typename T>
-    struct for_either<detail::morph_tag, T> {
+    struct for_either<utility::morph_tag, T> {
 
         template <typename From, typename To>
-        struct with_morphism : control::monad<monad::for_either, detail::morphism<From, To>, data::either, detail::morph_tag, T> {
+        struct with_morphism : control::monad<with_morphism<From, To>, data::either<utility::morph_tag, T>> {
 
-            using a = From;
-            using b = To;
+            using a = typename with_morphism::base_type::a;
+            using b = typename with_morphism::base_type::b;
             using ma = typename with_morphism::base_type::ma;
             using mb = typename with_morphism::base_type::mb;
 
-            static ma pure(a&& arg) {
-                return { std::move(arg) };
+            static ma pure(const a& arg) {
+                return arg;
             }
 
             static mb bind(const ma& arg, const std::function<mb(const a&)>& fun) {
@@ -207,18 +290,18 @@ namespace monad {
     };
 
     template <typename E>
-    struct for_either<E, detail::morph_tag> {
+    struct for_either<E, utility::morph_tag> {
 
         template <typename From, typename To>
-        struct with_morphism : control::monad<monad::for_either, detail::morphism<From, To>, data::either, E, detail::morph_tag> {
+        struct with_morphism : control::monad<with_morphism<From, To>, data::either<E, utility::morph_tag>> {
 
-            using a = From;
-            using b = To;
+            using a = typename with_morphism::base_type::a;
+            using b = typename with_morphism::base_type::b;
             using ma = typename with_morphism::base_type::ma;
             using mb = typename with_morphism::base_type::mb;
 
-            static ma pure(a&& arg) {
-                return { std::move(arg) };
+            static ma pure(const a& arg) {
+                return arg;
             }
 
             static mb bind(const ma& arg, const std::function<mb(const a&)>& fun) {
