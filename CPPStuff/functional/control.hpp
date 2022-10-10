@@ -61,6 +61,27 @@ namespace detail {
 
         template <size_t... Is>
         using at = typename _at<std::index_sequence<Is...>, parameter_pack<Ts...>>::type;
+
+        template <size_t N, class Take, class Drop>
+        struct _select;
+
+        template <class Take, class Drop>
+        struct _select<0, Take, Drop> {
+            using take = Take;
+            using drop = Drop;
+        };
+
+        template <size_t N, typename... Acc, typename Head, typename... Tail>
+        struct _select<N, parameter_pack<Acc...>, parameter_pack<Head, Tail...>> {
+            using take = typename _select<N - 1, parameter_pack<Acc..., Head>, parameter_pack<Tail...>>::take;
+            using drop = typename _select<N - 1, parameter_pack<Acc..., Head>, parameter_pack<Tail...>>::drop;
+        };
+
+        template <size_t N>
+        using take = typename _select<N, parameter_pack<>, parameter_pack<Ts...>>::take;
+
+        template <size_t N>
+        using drop = typename _select<N, parameter_pack<>, parameter_pack<Ts...>>::drop;
     };
 
     template <typename Type>
