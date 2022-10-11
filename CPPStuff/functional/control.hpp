@@ -82,6 +82,9 @@ namespace detail {
 
         template <size_t N>
         using drop = typename _select<N, parameter_pack<>, parameter_pack<Ts...>>::drop;
+        
+        template <typename... Us>
+        using plus = parameter_pack<Ts..., Us...>;
     };
 
     template <typename Type>
