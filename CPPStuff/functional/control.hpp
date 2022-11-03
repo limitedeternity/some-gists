@@ -1,4 +1,5 @@
 #pragma once
+#include "../detail_api.h"
 #include "data.hpp"
 
 namespace detail {
@@ -7,95 +8,9 @@ namespace detail {
     struct has_reserve_method : std::false_type {};
 
     template <typename T>
-    struct has_reserve_method<T, std::enable_if_t<std::is_member_function_pointer_v<decltype(&T::reserve)>>> : std::true_type {};
-
-    template <typename... Ts>
-    struct parameter_pack {
-
-        static constexpr size_t size = sizeof...(Ts);
-
-        template <template <typename...> class Ctor>
-        using unpack = Ctor<Ts...>;
-
-        template <typename What, typename With, typename T>
-        struct _replace {
-            using type = std::conditional_t<std::is_same_v<What, T>, With, T>;
-        };
-
-        template <typename What, typename With, template <typename...> class Ctor, typename... Args>
-        struct _replace<What, With, Ctor<Args...>> {
-            using type = std::conditional_t<
-                std::is_same_v<What, Ctor<Args...>>, With,
-                Ctor<typename _replace<What, With, Args>::type...>
-            >;
-        };
-
-        template <typename What, typename With>
-        using replace = parameter_pack<typename _replace<What, With, Ts>::type...>;
-
-        template <typename What, typename T>
-        struct _contains {
-            using trait = std::is_same<What, T>;
-        };
-
-        template <typename What, template <typename...> class Ctor, typename... Args>
-        struct _contains<What, Ctor<Args...>> {
-            using trait = std::disjunction<std::is_same<What, Ctor<Args...>>, typename _contains<What, Args>::trait...>;
-        };
-
-        template <typename What>
-        using contains = std::disjunction<typename _contains<What, Ts>::trait...>;
-
-        template <typename Iseq, typename T>
-        struct _at;
-
-        template <size_t I, template <typename...> class Ctor, typename... Args>
-        struct _at<std::index_sequence<I>, Ctor<Args...>> {
-            using type = std::tuple_element_t<I, std::tuple<Args...>>;
-        };
-
-        template <size_t I, size_t... Is, template <typename...> class Ctor, typename... Args>
-        struct _at<std::index_sequence<I, Is...>, Ctor<Args...>> {
-            using type = typename _at<std::index_sequence<Is...>, std::tuple_element_t<I, std::tuple<Args...>>>::type;
-        };
-
-        template <size_t... Is>
-        using at = typename _at<std::index_sequence<Is...>, parameter_pack<Ts...>>::type;
-
-        template <size_t N, class Take, class Drop>
-        struct _select;
-
-        template <class Take, class Drop>
-        struct _select<0, Take, Drop> {
-            using take = Take;
-            using drop = Drop;
-        };
-
-        template <size_t N, typename... Acc, typename Head, typename... Tail>
-        struct _select<N, parameter_pack<Acc...>, parameter_pack<Head, Tail...>> {
-            using take = typename _select<N - 1, parameter_pack<Acc..., Head>, parameter_pack<Tail...>>::take;
-            using drop = typename _select<N - 1, parameter_pack<Acc..., Head>, parameter_pack<Tail...>>::drop;
-        };
-
-        template <size_t N>
-        using take = typename _select<N, parameter_pack<>, parameter_pack<Ts...>>::take;
-
-        template <size_t N>
-        using drop = typename _select<N, parameter_pack<>, parameter_pack<Ts...>>::drop;
-        
-        template <typename... Us>
-        using plus = parameter_pack<Ts..., Us...>;
-    };
-
-    template <typename Type>
-    struct type_constructor_of;
-
-    template <template <typename...> class Ctor, typename... Args>
-    struct type_constructor_of<Ctor<Args...>> {
-        template <typename... Nargs>
-        using constructor = Ctor<Nargs...>;
-        using arguments = parameter_pack<Args...>;
-    };
+    struct has_reserve_method<T, nonstd::enable_if_t<
+        std::is_member_function_pointer_v<decltype(&T::reserve)>>
+    > : std::true_type {};
 }
 
 namespace utility {
