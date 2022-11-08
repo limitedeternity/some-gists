@@ -256,4 +256,13 @@ namespace detail {
 
     template <typename T, typename... Ts>
     inline constexpr bool is_any_of_v = is_any_of<T, Ts...>::value;
+    
+    template <typename Test, template <typename...> class Ctor>
+    struct is_specialization : std::false_type {};
+
+    template <template <typename...> class Ctor, typename... Args>
+    struct is_specialization<Ctor<Args...>, Ctor> : std::true_type {};
+
+    template <typename Test, template <typename...> class Ctor>
+    inline constexpr bool is_specialization_v = is_specialization<Test, Ctor>::value;
 }
