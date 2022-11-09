@@ -49,6 +49,15 @@ namespace nonstd {
         return static_cast<no_ref&&>(arg);
     }
 
+    /*
+     * Just casts to rvalue (equivalent to std::move)
+     */
+    template <typename T>
+    [[nodiscard]] constexpr decltype(auto) move(decltype(std::ignore), T&& arg) noexcept {
+        using no_ref = std::remove_reference_t<decltype(arg)>;
+        return static_cast<no_ref&&>(arg);
+    }
+
     template <typename T, size_t I>
     struct _indexed {
         using type = T;
@@ -256,7 +265,7 @@ namespace detail {
 
     template <typename T, typename... Ts>
     inline constexpr bool is_any_of_v = is_any_of<T, Ts...>::value;
-    
+
     template <typename Test, template <typename...> class Ctor>
     struct is_specialization : std::false_type {};
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "../defines/cxx.h"
 #include "../detail_api.h"
 
 namespace data {
@@ -14,13 +15,14 @@ namespace data {
         using std::variant<E, T>::variant;
         using std::variant<E, T>::operator=;
 
+        DEFAULT_COPY_ASSIGN_AND_MOVE(either);
+
         // Non-const downcasts
         std::variant<E, T>& as_variant() & { return *this; }
         std::variant<E, T>&& as_variant() && { return nonstd::move(*this); }
 
         // Const downcasts
         const std::variant<E, T>& as_variant() const& { return *this; }
-        // const std::variant<E, T>&& as_variant() const&& { return nonstd::move(*this); }
 
         // Non-const observers
         left_type* try_left() { return std::get_if<0>(this); }
@@ -32,15 +34,13 @@ namespace data {
 
         // Non-const accessors
         left_type& left() & { return *std::get_if<0>(this); }
-        left_type&& left() && { return nonstd::move(*std::get_if<0>(this)); }
+        left_type&& left() && { return nonstd::move(std::ignore, *std::get_if<0>(this)); }
         right_type& right() & { return *std::get_if<1>(this); }
-        right_type&& right() && { return nonstd::move(*std::get_if<1>(this)); }
+        right_type&& right() && { return nonstd::move(std::ignore, *std::get_if<1>(this)); }
 
         // Const accessors
         const left_type& left() const& { return *std::get_if<0>(this); }
-        // const left_type&& left() const&& { return nonstd::move(*std::get_if<0>(this)); }
         const right_type& right() const& { return *std::get_if<1>(this); }
-        // const right_type&& right() const&& { return nonstd::move(*std::get_if<1>(this)); }
     };
 }
 

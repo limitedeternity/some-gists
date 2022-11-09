@@ -3,6 +3,7 @@
 // ReSharper disable CppClangTidyModernizeUseNodiscard
 // ReSharper disable CppNonExplicitConvertingConstructor
 #include "jansson/jansson.h"
+#include "../defines/cxx.h"
 
 namespace json {
 
@@ -155,8 +156,7 @@ namespace json {
         Iterator(const Value& value);
         Iterator(const _private::ValueBase<_private::ObjectPropertyProxy>& value);
 
-        Iterator(const Iterator&) = delete;
-        Iterator& operator=(const Iterator&) = delete;
+        DISALLOW_COPY_AND_ASSIGN(Iterator);
 
         void next();
         Iterator& operator++();
