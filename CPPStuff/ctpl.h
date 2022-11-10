@@ -45,6 +45,43 @@ namespace ctpl {
                 it->wait();
             }
         }
+
+        template <class Rep, class Period>
+        std::future_status wait_all(const std::chrono::duration<Rep, Period>& timeout_duration) const {
+
+            std::chrono::duration<Rep, std::milli> timeout_ms;
+
+            if constexpr (std::is_same_v<Period, std::milli>) {
+                timeout_ms = timeout_duration;
+            }
+            else {
+                timeout_ms = std::chrono::duration_cast<decltype(timeout_ms)>(timeout_duration);
+            }
+
+            for (auto it = this->cbegin(); it != this->cend(); ++it) {
+
+                const auto start = std::chrono::steady_clock::now();
+                const auto status = it->wait_for(timeout_ms);
+                const auto delta_ms = std::chrono::duration_cast<decltype(timeout_ms)>(std::chrono::steady_clock::now() - start);
+
+                if (status == std::future_status::timeout) {
+                    return status;
+                }
+
+                if (delta_ms > timeout_ms) {
+
+                    if (std::next(it) == this->cend()) {
+                        break;
+                    }
+
+                    return std::future_status::timeout;
+                }
+
+                timeout_ms -= delta_ms;
+            }
+
+            return std::future_status::ready;
+        }
     };
 
     template <typename Key, typename Value>
@@ -86,6 +123,43 @@ namespace ctpl {
             for (auto it = this->cbegin(); it != this->cend(); ++it) {
                 it->second.wait();
             }
+        }
+
+        template <class Rep, class Period>
+        std::future_status wait_all(const std::chrono::duration<Rep, Period>& timeout_duration) const {
+
+            std::chrono::duration<Rep, std::milli> timeout_ms;
+
+            if constexpr (std::is_same_v<Period, std::milli>) {
+                timeout_ms = timeout_duration;
+            }
+            else {
+                timeout_ms = std::chrono::duration_cast<decltype(timeout_ms)>(timeout_duration);
+            }
+
+            for (auto it = this->cbegin(); it != this->cend(); ++it) {
+
+                const auto start = std::chrono::steady_clock::now();
+                const auto status = it->second.wait_for(timeout_ms);
+                const auto delta_ms = std::chrono::duration_cast<decltype(timeout_ms)>(std::chrono::steady_clock::now() - start);
+
+                if (status == std::future_status::timeout) {
+                    return status;
+                }
+
+                if (delta_ms > timeout_ms) {
+
+                    if (std::next(it) == this->cend()) {
+                        break;
+                    }
+
+                    return std::future_status::timeout;
+                }
+
+                timeout_ms -= delta_ms;
+            }
+
+            return std::future_status::ready;
         }
     };
 
