@@ -2,7 +2,7 @@
 #include "../detail_api.h"
 #include "jansson_wrapper.h"
 
-#define DEFINE_SCHEMA_KEY(_typename_, _literal_) struct _typename_ { static constexpr const char* str() { return _literal_; } }
+#define DEFINE_SCHEMA_KEY(_name_, _literal_) struct _name_ { static constexpr const char* str() { return _literal_; } }
 
 namespace json::schema {
 
