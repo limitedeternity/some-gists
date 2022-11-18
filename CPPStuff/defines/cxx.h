@@ -67,3 +67,29 @@
 #define INHERIT_CONSTRUCTORS_AND_ASSIGN(_base_class) \
     using _base_class::_base_class;                  \
     using _base_class::operator=
+
+#if defined(_MSC_VER)
+
+#if defined(DEBUG_INT3)
+#undef DEBUG_INT3
+#endif
+
+#if defined(_DEBUG)
+    #define DEBUG_INT3() __debugbreak()
+#else
+    #define DEBUG_INT3() __noop()
+#endif
+
+//
+
+#if defined(UNREACHABLE)
+#undef UNREACHABLE
+#endif
+
+#if defined(_DEBUG)
+    #define UNREACHABLE assert(0)
+#else
+    #define UNREACHABLE __assume(0)
+#endif
+
+#endif
