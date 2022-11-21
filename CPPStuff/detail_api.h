@@ -84,6 +84,14 @@ namespace nonstd {
             >{}
         )
     )::type;
+
+    /*
+     * std::make_array was removed in Library Fundamentals TS v3 + had some questionable implementation details
+     */
+    template <typename T, typename... Elems>
+    [[nodiscard]] constexpr std::array<T, sizeof...(Elems)> make_array(Elems&&... elems) {
+        return { std::forward<Elems>(elems)... };
+    }
 }
 
 namespace operators {
@@ -274,4 +282,25 @@ namespace detail {
 
     template <typename Test, template <typename...> class Ctor>
     inline constexpr bool is_specialization_v = is_specialization<Test, Ctor>::value;
+
+    /*
+     * Type mapper components
+     *
+     * template <typename T>
+     * typename std::disjunction<
+     *     on_types_equal<T, std::string, char*>,
+     *     on_types_equal<T, std::wstring, wchar_t*>,
+     *     default_type<T>
+     * >::type
+     */
+
+    template <typename V1, typename V2, typename T>
+    struct on_types_equal : std::is_same<V1, V2> {
+        using type = T;
+    };
+
+    template <typename T>
+    struct default_type : std::true_type {
+        using type = T;
+    };
 }
