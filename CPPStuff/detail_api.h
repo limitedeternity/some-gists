@@ -234,16 +234,23 @@ namespace detail {
     };
 
     template <typename R, typename... Args>
+    struct function_type<R(Args...) const> : function_type<R(Args...)> {};
+
+    template <typename R, typename... Args>
     struct function_type<R(*)(Args...)> : function_type<R(Args...)> {};
 
     template <typename R, typename... Args>
     struct function_type<R(&)(Args...)> : function_type<R(Args...)> {};
 
     template <typename R, class T, typename... Args>
-    struct function_type<R(T::*)(Args...)> : function_type<R(Args...)> {};
+    struct function_type<R(T::*)(Args...)> : function_type<R(Args...)> {
+        using class_type = T;
+    };
 
     template <typename R, class T, typename... Args>
-    struct function_type<R(T::*)(Args...) const> : function_type<R(Args...)> {};
+    struct function_type<R(T::*)(Args...) const> : function_type<R(Args...)> {
+        using class_type = T;
+    };
 
     /*
      * SFINAE transformers and checkers
