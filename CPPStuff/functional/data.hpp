@@ -48,7 +48,7 @@ namespace function {
 
     template <typename F>
     decltype(auto) compose(F&& f) {
-        return [f = std::forward<F>(f)](auto&&... args){
+        return [f = std::forward<F>(f)](auto&&... args) {
             return f(std::forward<decltype(args)>(args)...);
         };
     }

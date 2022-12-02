@@ -315,11 +315,15 @@ namespace json {
 
         template <typename Base>
         void ValueBase<Base>::clear() {
-            if (is_object()) {
+
+            /* */if (is_object()) {
                 json_object_clear(Base::as_json());
             }
-            else {
+            else if (is_array()) {
                 json_array_clear(Base::as_json());
+            }
+            else if (is_string()) {
+                json_string_set(Base::as_json(), "");
             }
         }
 
