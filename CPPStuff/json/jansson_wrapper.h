@@ -1,9 +1,9 @@
 #pragma once
-// ReSharper disable CppConstValueFunctionReturnType
-// ReSharper disable CppClangTidyModernizeUseNodiscard
-// ReSharper disable CppNonExplicitConvertingConstructor
-#include "jansson/jansson.h"
-#include "../defines/cxx.h"
+#include <memory>
+#include <string>
+
+#include "./jansson/jansson.h"
+#include "../utils/macro.h"
 
 namespace json {
 

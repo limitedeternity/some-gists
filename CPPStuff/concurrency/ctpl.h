@@ -1,6 +1,18 @@
 #pragma once
-#include "defines/cxx.h"
-#include "detail_api.h"
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <condition_variable>
+#include <deque>
+#include <functional>
+#include <future>
+#include <queue>
+#include <thread>
+#include <unordered_map>
+#include <vector>
+
+#include "../utils/macro.h"
+#include "../utils/meta.h"
 
 namespace ctpl {
 
@@ -315,5 +327,128 @@ namespace ctpl {
                 }
             }
         }
+    };
+
+    class task_builder {
+
+        using pool_type = ctpl::thread_pool;
+
+        template <typename F, class T>
+        class _member_fn {
+
+            F T::* m_member;
+            std::shared_ptr<T> m_object;
+            std::reference_wrapper<const std::atomic<pool_type*>> m_pool;
+
+        public:
+            _member_fn(
+                decltype(m_member) member,
+                decltype(m_object) object,
+                decltype(m_pool) pool
+            ) noexcept :
+                m_member{ member },
+                m_object{ nonstd::move(object) },
+                m_pool{ pool }
+            {}
+
+            DISALLOW_COPY_ASSIGN_AND_MOVE(_member_fn);
+
+            ~_member_fn() = default;
+
+            template <typename... Args, typename R = typename detail::function_type<F>::return_type>
+            std::future<R> operator()(Args&&... args) {
+
+                auto pool_ptr = m_pool.get().load(std::memory_order_acquire);
+
+                if (!pool_ptr || !m_object) {
+                    return {};
+                }
+
+                return pool_ptr->submit(m_member, m_object, std::forward<Args>(args)...);
+            }
+        };
+
+        template <typename F>
+        class _local_fn {
+
+            using func_type = typename detail::function_type<F>::as_object;
+            std::shared_ptr<func_type> m_function;
+            std::reference_wrapper<const std::atomic<pool_type*>> m_pool;
+
+        public:
+            _local_fn(
+                decltype(m_function) function,
+                decltype(m_pool) pool
+            ) noexcept :
+                m_function{ nonstd::move(function) },
+                m_pool{ pool }
+            {}
+
+            DISALLOW_COPY_ASSIGN_AND_MOVE(_local_fn);
+
+            ~_local_fn() = default;
+
+            template <typename... Args, typename R = typename detail::function_type<F>::return_type>
+            std::future<R> operator()(Args&&... args) {
+
+                auto pool_ptr = m_pool.get().load(std::memory_order_acquire);
+
+                if (!pool_ptr || !m_function) {
+                    return {};
+                }
+
+                return pool_ptr->submit(&func_type::operator(), m_function, std::forward<Args>(args)...);
+            }
+        };
+
+    public:
+        explicit task_builder(
+            const ctpl::congestion_ctrl congestion_ctrl = ctpl::congestion_ctrl::OFF,
+            const size_t thread_count = std::thread::hardware_concurrency() > 1 ? std::thread::hardware_concurrency() : 2
+        ) {
+            m_pool = new (&m_pool_storage) pool_type(congestion_ctrl, thread_count);
+        }
+
+        DISALLOW_COPY_ASSIGN_AND_MOVE(task_builder);
+
+        ~task_builder() {
+            joining_close();
+        }
+
+        void joining_close() {
+
+            std::call_once(m_pool_destroyed, [this] {
+                std::destroy_at(m_pool.exchange(nullptr, std::memory_order_acq_rel));
+            });
+        }
+
+        template <typename F, class T>
+        _member_fn<F, T> build(F T::* member, std::shared_ptr<T> object) noexcept {
+            return { member, nonstd::move(object), std::cref(m_pool) };
+        }
+
+        template <typename F>
+        _local_fn<F> build(F&& function) noexcept {
+
+            try {
+                using func_type = typename detail::function_type<F>::as_object;
+                return { std::make_shared<func_type>(std::forward<F>(function)), std::cref(m_pool) };
+            }
+            catch (const std::bad_alloc&) {
+                return { nullptr, std::cref(m_pool) };
+            }
+        }
+
+        void wait_for_tasks() const {
+
+            if (const auto pool_ptr = m_pool.load(std::memory_order_relaxed); pool_ptr) {
+                pool_ptr->wait_for_tasks();
+            }
+        }
+
+    private:
+        alignas(pool_type) std::byte m_pool_storage[sizeof(pool_type)];
+        std::atomic<pool_type*> m_pool = nullptr;
+        std::once_flag m_pool_destroyed;
     };
 }

@@ -1,6 +1,8 @@
 #pragma once
-#include "../defines/cxx.h"
-#include "../detail_api.h"
+#include <variant>
+
+#include "../utils/macro.h"
+#include "../utils/meta.h"
 
 namespace data {
 

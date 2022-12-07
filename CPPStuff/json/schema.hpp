@@ -1,6 +1,8 @@
 #pragma once
-#include "../detail_api.h"
-#include "jansson_wrapper.h"
+#include <variant>
+
+#include "./jansson_wrapper.h"
+#include "../utils/meta.h"
 
 #define DEFINE_SCHEMA_KEY(_name_, _literal_) struct _name_ { static constexpr const char* str() { return _literal_; } }
 

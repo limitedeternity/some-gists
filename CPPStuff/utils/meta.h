@@ -1,4 +1,8 @@
 #pragma once
+#include <array>
+#include <tuple>
+#include <type_traits>
+
 #define CLEAN_TYPE(_var_) std::decay_t<decltype(_var_)>
 #define MOVING_BIND(_var_) CLEAN_TYPE(_var_)(nonstd::move(_var_))
 #define DEFAULT(_var_) _var_ = CLEAN_TYPE(_var_){}

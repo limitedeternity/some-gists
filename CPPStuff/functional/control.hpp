@@ -1,6 +1,8 @@
 #pragma once
-#include "../detail_api.h"
-#include "data.hpp"
+#include <functional>
+
+#include "./data.hpp"
+#include "../utils/meta.h"
 
 namespace detail {
 
