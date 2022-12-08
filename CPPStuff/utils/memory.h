@@ -16,7 +16,10 @@ namespace memory {
         T* m_ptr;
 
     public:
-        out_ptr(std::unique_ptr<T, D>& owner) : m_owner(owner), m_ptr(m_owner.release()) {}
+        explicit out_ptr(std::unique_ptr<T, D>& owner) :
+            m_owner{ owner },
+            m_ptr{ m_owner.release() }
+        {}
 
         DISALLOW_COPY_ASSIGN_AND_MOVE(out_ptr);
 
