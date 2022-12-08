@@ -297,7 +297,7 @@ namespace ctpl {
             }
 
             m_tasks.push(std::forward<F>(task));
-            ++m_tasks_total;
+            m_tasks_total = m_tasks_total + 1;
 
             m_task_ready.notify_one();
         }
@@ -320,7 +320,7 @@ namespace ctpl {
                 task();
 
                 lock.lock();
-                --m_tasks_total;
+                m_tasks_total = m_tasks_total - 1;
 
                 if (m_waiting) {
                     m_task_done.notify_one();

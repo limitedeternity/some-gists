@@ -6,4 +6,6 @@
 __pycache__/
 *.py[cod]
 
+_Resharper.Caches
+.vs
 .vscode
