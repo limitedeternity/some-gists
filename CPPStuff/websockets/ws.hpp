@@ -1,6 +1,7 @@
 #pragma once
 #include <concurrent_queue.h>
 #include <atomic>
+#include <chrono>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -37,32 +38,39 @@ private:
     thread::suspended m_io_thread;
 
 public:
-    websocket_t() : websocket_base_t(), m_io_thread{
-        [this] {
-            while (m_running.load(std::memory_order_relaxed)) {
+    websocket_t() :
+        websocket_base_t(),
+        m_io_thread
+        {
+            [this] {
 
-                if (get_socket_state() == ws::socket_state::CLOSED) {
-                    m_running.store(false, std::memory_order_release);
-                    break;
+                using namespace std::chrono_literals;
+
+                while (m_running.load(std::memory_order_relaxed)) {
+
+                    if (get_socket_state() == ws::socket_state::CLOSED) {
+                        m_running.store(false, std::memory_order_release);
+                        break;
+                    }
+
+                    if (container_type data; m_outgoing.try_pop(data)) {
+                        push_message<opcode_constant::value>(data);
+                    }
+
+                    perform_io();
+
+                    get_message<container_type>([this](const auto& message) {
+                        m_incoming.push(message);
+                    });
+
+                    std::this_thread::sleep_for(10ms);
                 }
 
-                if (container_type data; m_outgoing.try_pop(data)) {
-                    push_message<opcode_constant::value>(data);
-                }
-
+                push_message<ws::opcode::CLOSE>();
                 perform_io();
-
-                get_message<container_type>([this](const auto& message) {
-                    m_incoming.push(message);
-                });
-
-                std::this_thread::sleep_for(10ms);
             }
-
-            push_message<ws::opcode::CLOSE>();
-            perform_io();
         }
-    } {}
+    {}
 
     DISALLOW_COPY_AND_ASSIGN(websocket_t);
     DEFAULT_MOVE_AND_ASSIGN(websocket_t);
