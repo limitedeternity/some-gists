@@ -225,7 +225,7 @@ namespace ctpl {
             std::shared_ptr<std::promise<R>> promise = std::make_shared<std::promise<R>>();
 
             push_task(
-                [task = nonstd::move(task), promise]() mutable {
+                [task = nonstd::move(task), promise]() mutable noexcept {
 
                     try {
 
@@ -428,15 +428,12 @@ namespace ctpl {
         }
 
         template <typename F>
-        _local_fn<F> build(F&& function) noexcept {
-
-            try {
-                using func_type = typename detail::function_type<F>::as_object;
-                return { std::make_shared<func_type>(std::forward<F>(function)), std::cref(m_pool) };
-            }
-            catch (const std::bad_alloc&) {
-                return { nullptr, std::cref(m_pool) };
-            }
+        _local_fn<F> build(F&& function) noexcept try {
+            using func_type = typename detail::function_type<F>::as_object;
+            return { std::make_shared<func_type>(std::forward<F>(function)), std::cref(m_pool) };
+        }
+        catch (const std::bad_alloc&) {
+            return { nullptr, std::cref(m_pool) };
         }
 
         void wait_for_tasks() const {
