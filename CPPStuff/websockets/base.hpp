@@ -28,22 +28,32 @@ namespace ws {
     };
 
     // https://www.rfc-editor.org/rfc/rfc6455#section-5.2
-    #pragma pack(push, 1)
     struct header_t {
 
-        u8 fin : 1;
-        u8 rsv1 : 1;
-        u8 rsv2 : 1;
-        u8 rsv3 : 1;
-        ws::opcode opcode : 4;
+        union {
+            u8 frame_props;
 
-        u8 mask : 1;
-        u8 payload_len : 7;
+            struct {
+                ws::opcode opcode : 4;
+                bool rsv3 : 1;
+                bool rsv2 : 1;
+                bool rsv1 : 1;
+                bool fin : 1;
+            };
+        };
+
+        union {
+            u8 payload_props;
+
+            struct {
+                u8 payload_len : 7;
+                bool mask : 1;
+            };
+        };
 
         u64 ext_payload_len;
         u32be masking_key;
     };
-    #pragma pack(pop)
 }
 
 namespace detail {
@@ -175,15 +185,10 @@ public:
             const auto rx_data = m_rxbuf.data();
 
             ws::header_t ws{
-                IS_FLAG_ON(rx_data[0], 0x80),
-                IS_FLAG_ON(rx_data[0], 0x40),
-                IS_FLAG_ON(rx_data[0], 0x20),
-                IS_FLAG_ON(rx_data[0], 0x10),
-                static_cast<ws::opcode>(rx_data[0] & 0x0f),
-                IS_FLAG_ON(rx_data[1], 0x80),
-                static_cast<u8>(rx_data[1] & 0x7f),
+                rx_data[0],
+                rx_data[1],
                 0,
-                {0}
+                0
             };
 
             const size_t header_size = static_cast<size_t>(2) + (ws.payload_len == 126 ? 2 : 0) + (ws.payload_len == 127 ? 8 : 0) + (ws.mask ? 4 : 0);
