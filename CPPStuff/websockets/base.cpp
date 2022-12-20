@@ -381,15 +381,17 @@ std::vector<u8> websocket_base_t::ws_build_header(ws::opcode opcode, u64 message
     std::vector<u8> header(static_cast<size_t>(2) + (message_size >= 126 ? 2 : 0) + (message_size >= 65536 ? 6 : 0) + 4, 0);
     header[0] = operators::enum_to_integral(opcode) | 0x80;
 
+    ptrdiff_t mask_offset = 0;
+
     if (message_size < 126) {
         header[1] = (message_size & 0xff) | 0x80;
-        std::copy_n(mask.as_bytes, sizeof(mask), &header[2]);
+        mask_offset = 2;
     }
     else if (message_size < 65536) {
         header[1] = 126 | 0x80;
         header[2] = (message_size >> 8) & 0xff;
         header[3] = (message_size >> 0) & 0xff;
-        std::copy_n(mask.as_bytes, sizeof(mask), &header[4]);
+        mask_offset = 4;
     }
     else {
         header[1] = 127 | 0x80;
@@ -401,9 +403,10 @@ std::vector<u8> websocket_base_t::ws_build_header(ws::opcode opcode, u64 message
         header[7] = (message_size >> 16) & 0xff;
         header[8] = (message_size >> 8) & 0xff;
         header[9] = (message_size >> 0) & 0xff;
-        std::copy_n(mask.as_bytes, sizeof(mask), &header[10]);
+        mask_offset = 10;
     }
 
+    std::copy_n(mask.as_bytes, sizeof(mask), &header[mask_offset]);
     return header;
 }
 
