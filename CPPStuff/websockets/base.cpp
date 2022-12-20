@@ -410,8 +410,8 @@ std::vector<u8> websocket_base_t::ws_build_header(ws::opcode opcode, u64 message
     return header;
 }
 
-void websocket_base_t::ws_apply_mask(u8* data, u64 len, const u32be& mask) {
+void websocket_base_t::ws_apply_mask(u8* __restrict data, u64 len, const u32be& mask) {
     for (decltype(len) i = 0; i < len; ++i) {
-        data[i] ^= mask.as_bytes[i % sizeof(mask)];
+        data[i] ^= mask.as_bytes[i & (sizeof(mask) - 1)];
     }
 }
