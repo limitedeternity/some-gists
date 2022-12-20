@@ -17,6 +17,7 @@ namespace data {
         using std::variant<E, T>::variant;
         using std::variant<E, T>::operator=;
 
+        either() = default;
         DEFAULT_COPY_ASSIGN_AND_MOVE(either);
 
         // Non-const downcasts
