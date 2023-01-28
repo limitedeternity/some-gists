@@ -27,19 +27,26 @@ namespace memory {
             m_owner.reset(m_ptr);
         }
 
-        operator T*() const {
+        operator T*&() {
+            free_mem();
             return m_ptr;
         }
 
         operator T**() {
+            free_mem();
+            return &m_ptr;
+        }
 
-            if (m_ptr) {
-                D deleter;
-                deleter(m_ptr);
-                m_ptr = nullptr;
+    private:
+        void free_mem() {
+
+            if (!m_ptr) {
+                return;
             }
 
-            return &m_ptr;
+            D deleter;
+            deleter(m_ptr);
+            m_ptr = nullptr;
         }
     };
 }
