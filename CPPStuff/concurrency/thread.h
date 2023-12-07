@@ -28,18 +28,21 @@ namespace thread {
 
     public:
         template <typename F, typename... Args>
-        explicit suspended(F&& f, Args&&... args) : m_thread{
-            [
-                future = m_promise.get_future(),
-                routine = std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-            ]
-            () mutable {
+        explicit suspended(F&& f, Args&&... args) :
+            m_promise{},
+            m_thread{
+                [
+                    future = m_promise.get_future(),
+                    routine = std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+                ]
+                () mutable {
 
-                if (future.get()) {
-                    routine();
+                    if (future.get()) {
+                        routine();
+                    }
                 }
             }
-        } {}
+        {}
 
         DISALLOW_COPY_AND_ASSIGN(suspended);
         DEFAULT_MOVE_AND_ASSIGN(suspended);
