@@ -186,7 +186,7 @@ namespace ctpl {
         volatile size_t m_tasks_total = 0;
 
         std::atomic_bool m_running = false;
-        volatile bool m_waiting = false;
+        volatile size_t m_waiting_total = 0;
 
         std::condition_variable m_task_ready;
         std::condition_variable m_task_done;
@@ -254,9 +254,9 @@ namespace ctpl {
 
             std::unique_lock lock(m_mutex);
 
-            m_waiting = true;
+            m_waiting_total = m_waiting_total + 1;
             m_task_done.wait(lock, [this] { return m_tasks_total == 0; });
-            m_waiting = false;
+            m_waiting_total = m_waiting_total - 1;
         }
 
     private:
@@ -291,9 +291,9 @@ namespace ctpl {
             std::unique_lock lock(m_mutex);
 
             if (operators::enum_to_integral(m_congestion_ctrl)) {
-                m_waiting = true;
+                m_waiting_total = m_waiting_total + 1;
                 m_task_done.wait(lock, [this] { return m_tasks_total <= m_threads.size(); });
-                m_waiting = false;
+                m_waiting_total = m_waiting_total - 1;
             }
 
             m_tasks.push(std::forward<F>(task));
@@ -322,8 +322,8 @@ namespace ctpl {
                 lock.lock();
                 m_tasks_total = m_tasks_total - 1;
 
-                if (m_waiting) {
-                    m_task_done.notify_one();
+                if (m_waiting_total > 0) {
+                    m_task_done.notify_all();
                 }
             }
         }
