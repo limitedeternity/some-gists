@@ -126,6 +126,23 @@ namespace operators {
     }
 }
 
+namespace helpers {
+
+    template <size_t N>
+    [[nodiscard]] constexpr decltype(auto) nth(auto&&... args) {
+
+        return []<size_t... Ns>(std::index_sequence<Ns...>, auto&&... args) -> decltype(auto) {
+
+            return [](nonstd::pack_element_t<Ns, decltype(args)...>..., auto&& val, auto&&...) -> decltype(auto) {
+
+                return std::forward<decltype(val)>(val);
+            }
+            (std::forward<decltype(args)>(args)...);
+        }
+        (std::make_index_sequence<N>{}, std::forward<decltype(args)>(args)...);
+    }
+}
+
 namespace detail {
 
     /*
